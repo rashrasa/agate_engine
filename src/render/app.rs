@@ -338,13 +338,14 @@ impl ApplicationHandler<Event> for App {
             let mut renderer = pollster::block_on(Renderer::new(window.clone()));
 
             info!("Adding meshes");
-            while let Some((mut completer, mesh)) = meshes.pop() {
+            while meshes.len() > 0 {
+                let (mut completer, mesh) = meshes.remove(0);
                 let mesh_id = renderer.add_mesh_instanced(mesh).unwrap();
                 completer.complete(mesh_id).unwrap();
             }
-
             info!("Adding textures");
-            while let Some((mut completer, texture_init)) = textures.pop() {
+            while textures.len() > 0 {
+                let (mut completer, texture_init) = textures.remove(0);
                 let texture_id = renderer.new_texture(TextureInitData {
                     image: texture_init.image,
                     resize: texture_init.resize,
@@ -354,7 +355,9 @@ impl ApplicationHandler<Event> for App {
 
             info!("Adding entities");
             let mut entities = vec![];
-            while let Some((mut completer, entity)) = players_init.pop() {
+
+            while players_init.len() > 0 {
+                let (mut completer, entity) = players_init.remove(0);
                 let id = entities.len() as u64;
                 let player = Entity::new(
                     id,
@@ -390,7 +393,8 @@ impl ApplicationHandler<Event> for App {
                 completer.complete(id).unwrap();
             }
 
-            while let Some((mut completer, object_init)) = objects_init.pop() {
+            while objects_init.len() > 0 {
+                let (mut completer, object_init) = objects_init.remove(0);
                 let id = entities.len() as u64;
                 let object = Entity::new(
                     id,

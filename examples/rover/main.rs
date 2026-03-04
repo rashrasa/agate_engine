@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 const MESH_CUBE2: u64 = 0;
 const MESH_ROUNDISH: u64 = 1;
-const MESH_FLAT16: u64 = 2;
+const MESH_SPHERE: u64 = 2;
 
 use agate_engine::{
     core::{
@@ -28,8 +28,7 @@ fn main() {
 
     let mut mesh_completers: Vec<Completer<u64>> = vec![];
     for mesh in meshes {
-        let completer = app.add_mesh(mesh).unwrap();
-        mesh_completers.push(completer);
+        mesh_completers.push(app.add_mesh(mesh).unwrap());
     }
 
     let texture_completer = app.add_texture(TextureInitData {
@@ -38,44 +37,41 @@ fn main() {
         resize: ResizeStrategy::Stretch(FilterType::Gaussian),
     });
 
-    app.add_player(PlayerInitData {
-        mesh_id: mesh_completers.get(MESH_CUBE2 as usize).unwrap().clone(),
-        texture_id: texture_completer.clone(),
-        velocity: Vector3::new(0.0, 0.0, 0.0),
-        acceleration: Vector3::new(0.0, 0.0, 0.0),
-        bounding_box: BoundingBox::new(
-            (1.0 / 2.0, 1.0 / 2.0, 1.0 / 2.0),
-            (-1.0 / 2.0, -1.0 / 2.0, -1.0 / 2.0),
-        ),
-        scale: Vector3::new(1.0, 1.0, 1.0),
-        rotation: UnitQuaternion::identity(),
-        translation: Vector3::new(0.0, 10.0, 0.0),
-        response: CollisionResponse::Inelastic(1.0),
-        mass: 100.0,
-    });
+    // app.add_player(PlayerInitData {
+    //     mesh_id: mesh_completers.get(MESH_CUBE2 as usize).unwrap().clone(),
+    //     texture_id: texture_completer.clone(),
+    //     velocity: Vector3::new(1.0, 1.0, 1.0) * 10.0,
+    //     acceleration: Vector3::new(0.0, 0.0, 0.0),
+    //     bounding_box: BoundingBox::new(
+    //         (1.0 / 2.0, 1.0 / 2.0, 1.0 / 2.0),
+    //         (-1.0 / 2.0, -1.0 / 2.0, -1.0 / 2.0),
+    //     ),
+    //     scale: Vector3::new(1.0, 1.0, 1.0),
+    //     rotation: UnitQuaternion::identity(),
+    //     translation: Vector3::new(0.0, 10.0, 0.0),
+    //     response: CollisionResponse::Inelastic(1.0),
+    //     mass: 100.0,
+    // });
 
     for i in -3..4 {
         for j in -3..4 {
             for k in -3..4 {
                 app.add_object(ObjectInitData {
-                    mesh_id: mesh_completers
-                        .get(((i + j + k as i32).rem_euclid(n_meshes as i32)) as usize)
-                        .unwrap()
-                        .clone(),
+                    mesh_id: mesh_completers.get(MESH_CUBE2 as usize).unwrap().clone(),
                     texture_id: texture_completer.clone(),
-                    velocity: Vector3::zeros(),
-                    acceleration: Vector3::new(i as f32, j as f32, k as f32),
+                    velocity: Vector3::new(1.0, 1.0, 1.0) * 0.0,
+                    acceleration: Vector3::zeros(),
                     bounding_box: BoundingBox::new(
                         (1.0 / 2.0, 1.0 / 2.0, 1.0 / 2.0),
                         (-1.0 / 2.0, -1.0 / 2.0, -1.0 / 2.0),
                     ),
-                    mass: 5.0,
+                    mass: 1.0e12,
                     scale: Vector3::new(5.0, 5.0, 5.0),
                     rotation: UnitQuaternion::from_axis_angle(
                         &UnitVector3::new_normalize([0.0, 0.0, 1.0].into()),
-                        -(PI * (i + k + j) as f32) / 4.0,
+                        (rand::random::<f32>().abs() / f32::MAX) * 2.0 * PI,
                     ),
-                    translation: Vector3::new(1.0 * i as f32, 2.0 * j as f32, 1.0 * k as f32),
+                    translation: Vector3::new(10.0 * i as f32, 10.0 * j as f32, 10.0 * k as f32),
                     response: CollisionResponse::Inelastic(0.9),
                 });
             }
