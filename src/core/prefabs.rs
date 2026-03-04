@@ -6,7 +6,9 @@ pub use systems::CollisionsSystem;
 
 use crate::core::{
     System,
-    prefabs::systems::{AudioSystem, DynamicsSystem, GravitySystem, MetricsSystem},
+    prefabs::systems::{
+        AudioSystem, DynamicsSystem, EntitySpawnerSystem, GravitySystem, MetricsSystem,
+    },
 };
 
 pub const DEFAULT_SYSTEMS: fn() -> Vec<Box<dyn System>> = || {
@@ -16,5 +18,6 @@ pub const DEFAULT_SYSTEMS: fn() -> Vec<Box<dyn System>> = || {
         Box::new(AudioSystem::new()),
         Box::new(DynamicsSystem),
         Box::new(GravitySystem),
+        Box::new(EntitySpawnerSystem::new(0, 0)),
     ]
 };

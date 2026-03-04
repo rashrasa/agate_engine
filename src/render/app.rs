@@ -108,6 +108,27 @@ pub struct ActiveState {
 }
 
 impl ActiveState {
+    pub fn add_object(&mut self, object: ObjectInitData) -> u64 {
+        let id = self.entities.len() as u64;
+        let object = Entity::new(
+            id,
+            object.mesh_id.consume().unwrap(),
+            object.texture_id.consume().unwrap(),
+            object.scale,
+            object.rotation,
+            object.translation,
+            object.velocity,
+            object.acceleration,
+            object.bounding_box,
+            EntityType::Object,
+            object.response,
+            object.mass,
+        );
+
+        self.entities.push(object);
+        id
+    }
+
     pub fn update(&mut self, _elapsed: f32, world: &mut World) {
         let pos = self.current_camera.position();
         world.load((pos[0], pos[2]), RENDER_DISTANCE);
