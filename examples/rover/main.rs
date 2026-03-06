@@ -62,7 +62,7 @@ fn main() {
     //     velocity: Vector3::zeros(),
     //     acceleration: Vector3::zeros(),
     //     bounding_box: BoundingBox::ZERO,
-    //     mass: 5.0e10,
+    //     mass: 5.0e19,
     //     scale: Vector3::new(5.0, 5.0, 5.0),
     //     rotation: UnitQuaternion::identity(),
     //     translation: Vector3::zeros(),
@@ -73,7 +73,7 @@ fn main() {
         for j in -3..4 {
             for k in -3..4 {
                 app.add_object(ObjectInitData {
-                    mesh_id: mesh_completers.get(0).unwrap().clone(),
+                    mesh_id: penguin_model_completer.clone(),
                     texture_id: texture_completer.clone(),
                     velocity: Vector3::new(1.0, 1.0, 1.0),
                     acceleration: Vector3::zeros(),

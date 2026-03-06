@@ -49,10 +49,10 @@ impl BoundingBox {
         let z = (other.z + other.z_size) / 2.0 - (self.z + self.z_size) / 2.0;
 
         let min_x_size = self.x_size.min(other.x_size);
-        let _min_y_size = self.y_size.min(other.y_size);
-        let _min_z_size = self.z_size.min(other.z_size);
+        let min_y_size = self.y_size.min(other.y_size);
+        let min_z_size = self.z_size.min(other.z_size);
 
-        if x.abs() > min_x_size || x.abs() > min_x_size || x.abs() > min_x_size {
+        if x.abs() > min_x_size || y.abs() > min_y_size || z.abs() > min_z_size {
             return None;
         }
 
