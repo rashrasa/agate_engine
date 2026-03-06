@@ -1,9 +1,8 @@
 pub mod app;
-pub mod instance;
-pub mod mesh;
+pub mod model;
 pub mod renderer;
 pub mod shader;
-pub mod textures;
+pub mod storage;
 pub mod vertex;
 
 /*

@@ -18,9 +18,9 @@ use crate::{
     core::{camera::Camera, entity::Entity, lights::LightSourceStorage},
     render::{
         app::{ActiveState, MeshInitData, TextureInitData},
-        mesh,
         shader::{InstancedRenderModule, RenderPipelineSpec, ShaderSpec, UniformSpec, VertexSpec},
-        textures::TextureStorage,
+        storage::mesh,
+        storage::textures::TextureStorage,
         vertex::Vertex,
     },
 };

@@ -156,3 +156,5 @@ Engine only supports 64-bit CPU architectures.
 Marble texture sourced from [https://www.manytextures.com/texture/48/white-marble/], licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
 
 Motorcycle Engine_60Km/h.wav by Cmart94 -- [https://freesound.org/s/518177/] -- License: Attribution 4.0
+
+Penguin Model [https://free3d.com/3d-model/emperor-penguin-601811.html]

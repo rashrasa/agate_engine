@@ -11,8 +11,8 @@ use agate_engine::{
         geometry::{EdgeJoin, Face, Mesh, Shape3},
     },
     render::{
-        app::{App, MeshInitData, ObjectInitData, PlayerInitData, TextureInitData},
-        textures::ResizeStrategy,
+        app::{App, MeshInitData, ObjectInitData, TextureInitData},
+        storage::textures::ResizeStrategy,
         vertex::Vertex,
     },
 };
@@ -36,6 +36,10 @@ fn main() {
             .unwrap(),
         resize: ResizeStrategy::Stretch(FilterType::Gaussian),
     });
+
+    let penguin_model_completer = app
+        .add_obj_model("examples/rover/assets/PenguinBaseMesh.obj")
+        .unwrap();
 
     // app.add_player(PlayerInitData {
     //     mesh_id: mesh_completers.get(MESH_CUBE2 as usize).unwrap().clone(),
@@ -77,6 +81,19 @@ fn main() {
             }
         }
     }
+
+    app.add_object(ObjectInitData {
+        mesh_id: penguin_model_completer,
+        texture_id: texture_completer.clone(),
+        velocity: Vector3::zeros(),
+        acceleration: Vector3::zeros(),
+        bounding_box: BoundingBox::ZERO,
+        mass: 0.0,
+        scale: Vector3::new(5.0, 5.0, 5.0),
+        rotation: UnitQuaternion::identity(),
+        translation: Vector3::zeros(),
+        response: CollisionResponse::Inelastic(0.9),
+    });
 
     App::start(&mut app);
 }

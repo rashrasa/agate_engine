@@ -25,7 +25,10 @@ use crate::{
         world::terrain::World,
     },
     render::{
-        mesh::MeshStorageError, renderer::Renderer, textures::ResizeStrategy, vertex::Vertex,
+        model::{TobjModel, TobjModelError},
+        renderer::Renderer,
+        storage::{mesh::MeshStorageError, textures::ResizeStrategy},
+        vertex::Vertex,
     },
 };
 
@@ -214,6 +217,52 @@ impl App {
             world: World::new(seed),
             input: InputController::new(),
             systems: DEFAULT_SYSTEMS(),
+        }
+    }
+
+    pub fn add_obj_model(&mut self, path: &str) -> Result<Completer<u64>, MeshStorageError> {
+        let model =
+            TobjModel::load_from_obj(path).map_err(|e| MeshStorageError::TobjModelError(e))?;
+        let indices: Vec<u16> = model
+            .model()
+            .mesh
+            .indices
+            .iter()
+            .map(|i| *i as u16)
+            .collect();
+        let mut vertices = vec![];
+        for i in 0..model.model().mesh.positions.len() / 3 {
+            vertices.push(Vertex {
+                position: [
+                    model.model().mesh.positions[i * 3],
+                    model.model().mesh.positions[i * 3 + 1],
+                    model.model().mesh.positions[i * 3 + 2],
+                ],
+                normal: [
+                    model.model().mesh.normals[i * 3],
+                    model.model().mesh.normals[i * 3 + 1],
+                    model.model().mesh.normals[i * 3 + 2],
+                ],
+                tex_coords: [
+                    model.model().mesh.texcoords[i * 2],
+                    model.model().mesh.texcoords[i * 2 + 1],
+                ],
+            })
+        }
+        let mesh = MeshInitData { vertices, indices };
+        let completer = Completer::new(APP_START_PRECOND);
+        match &mut self.state {
+            AppState::NeedsInit(init_data) => {
+                init_data.transform_meshes.push((completer.clone(), mesh));
+
+                Ok(completer)
+            }
+            AppState::Started {
+                renderer, state: _, ..
+            } => {
+                let mesh_id = renderer.add_mesh_instanced(mesh)?;
+                Ok(Completer::from_value(mesh_id))
+            }
         }
     }
 

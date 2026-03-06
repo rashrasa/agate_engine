@@ -13,7 +13,6 @@
 use std::{collections::HashMap, io::Read, num::NonZero, ops::Deref};
 
 use bytemuck::{Pod, Zeroable};
-use log::debug;
 use wgpu::{
     BindGroup, BindGroupLayout, ColorTargetState, DepthStencilState, Device, FragmentState,
     IndexFormat, MultisampleState, PipelineCache, PipelineCompilationOptions,
@@ -26,8 +25,8 @@ use crate::{
     core::{Instanced, Meshed, Unique},
     render::{
         app::MeshInitData,
-        instance::InstanceStorage,
-        mesh::{MeshStorage, MeshStorageError},
+        storage::instance::InstanceStorage,
+        storage::mesh::{MeshStorage, MeshStorageError},
     },
 };
 
