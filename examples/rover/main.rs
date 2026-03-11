@@ -13,7 +13,7 @@ use agate_engine::{
     render::{
         app::{App, MeshInitData, ObjectInitData, TextureInitData},
         storage::textures::ResizeStrategy,
-        vertex::default::DefaultVertexType,
+        vertex::DefaultVertexType,
     },
 };
 use image::imageops::FilterType;

@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use cgmath::{InnerSpace, Matrix3, Rad, SquareMatrix, Vector3};
 
-use crate::render::{GlobalIndexType, vertex::default::DefaultVertexType};
+use crate::render::{GlobalIndexType, vertex::DefaultVertexType};
 
 pub trait Mesh {
     fn vertices(&self) -> &[DefaultVertexType];

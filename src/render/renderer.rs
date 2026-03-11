@@ -26,10 +26,7 @@ use crate::{
         gui::EguiRenderer,
         module::{InstancedRenderModule, RenderPipelineSpec, ShaderSpec, UniformSpec, VertexSpec},
         storage::{mesh, textures::TextureStorage},
-        vertex::{
-            default::{DefaultInstanceType, DefaultVertexType},
-            terrain::{TerrainInstanceType, TerrainVertexType},
-        },
+        vertex::{DefaultInstanceType, DefaultVertexType, TerrainInstanceType, TerrainVertexType},
     },
 };
 
@@ -277,6 +274,18 @@ impl Renderer {
                 },
                 (vec![
                     // TODO: Add sun and moon
+                    UniformSpec {
+                        bind_group_layout: camera_bind_group_layout.clone(),
+                    },
+                    UniformSpec {
+                        bind_group_layout: texture_bind_group_layout.clone(),
+                    },
+                    UniformSpec {
+                        bind_group_layout: lights.layout().clone(),
+                    },
+                    UniformSpec {
+                        bind_group_layout: depth_texture_bind_group_layout.clone(),
+                    },
                 ])
                 .iter(),
                 &RenderPipelineSpec {
@@ -490,7 +499,16 @@ impl Renderer {
                 occlusion_query_set: None,
                 timestamp_writes: None,
             });
-
+            self.render_module_terrain.draw_all(
+                &mut render_pass,
+                [
+                    &state.current_camera().bind_group(),
+                    &&self.textures.get(&1).unwrap().3,
+                    &self.lights.bind_group(),
+                    &&self.depth_bind_group,
+                ]
+                .iter(),
+            );
             self.render_module_transformed.draw_all(
                 &mut render_pass,
                 [
@@ -502,7 +520,6 @@ impl Renderer {
                 .iter(),
             );
         }
-
         self.egui_renderer.render(
             &self.device,
             &self.queue,

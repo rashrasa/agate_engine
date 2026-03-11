@@ -29,7 +29,7 @@ use crate::{
         model::{TobjModel, TobjModelError},
         renderer::Renderer,
         storage::{mesh::MeshStorageError, textures::ResizeStrategy},
-        vertex::default::DefaultVertexType,
+        vertex::DefaultVertexType,
     },
 };
 

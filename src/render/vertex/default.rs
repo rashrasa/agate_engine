@@ -1,9 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 use wgpu::{BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode};
 
-pub type DefaultVertexType = Vertex;
-pub type DefaultInstanceType = [[f32; 4]; 4];
-
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Pod, Zeroable)]
 pub struct Vertex {
@@ -15,7 +12,7 @@ pub struct Vertex {
 impl Vertex {
     pub const fn vertex_desc() -> VertexBufferLayout<'static> {
         VertexBufferLayout {
-            array_stride: std::mem::size_of::<Vertex>() as BufferAddress,
+            array_stride: std::mem::size_of::<super::DefaultVertexType>() as BufferAddress,
             step_mode: VertexStepMode::Vertex,
             attributes: &[
                 VertexAttribute {
@@ -39,7 +36,7 @@ impl Vertex {
 
     pub const fn instance_desc() -> VertexBufferLayout<'static> {
         VertexBufferLayout {
-            array_stride: std::mem::size_of::<[[f32; 4]; 4]>() as BufferAddress,
+            array_stride: std::mem::size_of::<super::DefaultInstanceType>() as BufferAddress,
             step_mode: VertexStepMode::Instance,
             attributes: &[
                 VertexAttribute {

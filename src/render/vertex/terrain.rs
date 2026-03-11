@@ -1,9 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 use wgpu::{BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode};
 
-pub type TerrainVertexType = TerrainVertex;
-pub type TerrainInstanceType = f32;
-
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
 pub struct TerrainVertex {
@@ -15,7 +12,7 @@ pub struct TerrainVertex {
 impl TerrainVertex {
     pub const fn vertex_desc() -> VertexBufferLayout<'static> {
         VertexBufferLayout {
-            array_stride: std::mem::size_of::<TerrainVertexType>() as BufferAddress,
+            array_stride: std::mem::size_of::<super::TerrainVertexType>() as BufferAddress,
             step_mode: VertexStepMode::Vertex,
             attributes: &[
                 VertexAttribute {
@@ -39,7 +36,7 @@ impl TerrainVertex {
 
     pub const fn instance_desc() -> VertexBufferLayout<'static> {
         VertexBufferLayout {
-            array_stride: std::mem::size_of::<TerrainInstanceType>() as BufferAddress,
+            array_stride: std::mem::size_of::<super::TerrainInstanceType>() as BufferAddress,
             step_mode: VertexStepMode::Instance,
             attributes: &[VertexAttribute {
                 offset: 0,
