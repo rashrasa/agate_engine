@@ -5,6 +5,7 @@ use std::{
 };
 
 use log::info;
+use nalgebra::{ArrayStorage, Const, Dim, ToConst, Vector3};
 use serde_json::{Number, Value};
 
 use crate::core;
@@ -72,7 +73,7 @@ impl core::System for MetricsSystem {
     fn before_render(&mut self, _args: &mut core::BeforeRenderArgs) {
         self.start_render = Instant::now();
     }
-    fn after_render(&mut self, _args: &mut core::AfterRenderArgs) {
+    fn after_render(&mut self, args: &mut core::AfterRenderArgs) {
         self.window_rendering += self.start_render.elapsed();
         self.n_renders += 1;
 
@@ -84,9 +85,16 @@ impl core::System for MetricsSystem {
             let cpu_time = (self.window_ticking.as_secs_f64() / self.n_ticks as f64) * 1000.0;
             let gpu_time = (self.window_rendering.as_secs_f64() / self.n_renders as f64) * 1000.0;
             let fps = self.n_renders as f64 / window_time;
+
+            let anomalies = args
+                .state
+                .entities()
+                .iter()
+                .filter(|e| has_nan(&e.acceleration))
+                .count();
             info!(
-                "CPU/IO: {:.2}ms, Render: {:.2}ms, FPS: {:.2}",
-                cpu_time, gpu_time, fps
+                "\nCPU/IO: {:.2}ms\nRender: {:.2}ms\nFPS: {:.2}\nEntities with NaN accelerations: {}",
+                cpu_time, gpu_time, fps, anomalies
             );
 
             if let Some(gui_data) = &self.gui_data {
@@ -105,6 +113,8 @@ impl core::System for MetricsSystem {
                         "fps".into(),
                         Value::Number(Number::from_f64(fps).unwrap_or(Number::from(0))),
                     );
+
+                    gui_data.insert("anomalies".into(), Value::Number(Number::from(anomalies)));
                 }
             }
 
@@ -115,4 +125,16 @@ impl core::System for MetricsSystem {
             self.window_start = Instant::now();
         }
     }
+}
+
+fn has_nan<const R: usize, const C: usize>(
+    data: &nalgebra::Matrix<f32, Const<R>, Const<C>, ArrayStorage<f32, R, C>>,
+) -> bool {
+    for a in data.iter() {
+        if a.is_nan() {
+            return true;
+        }
+    }
+
+    return false;
 }

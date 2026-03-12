@@ -344,15 +344,22 @@ impl Renderer {
                 let mut display_str = String::new();
                 if let Ok(data) = data.read() {
                     if let Some(cpu) = data.get("cpu") {
-                        display_str += &format!("CPU Time: {:.2}", cpu.as_f64().unwrap_or(0.0));
+                        display_str += &format!("CPU Time: {:.2}", cpu.as_f64().unwrap_or(-1.0));
                     }
 
                     if let Some(gpu) = data.get("gpu") {
-                        display_str += &format!(" GPU Time: {:.2}", gpu.as_f64().unwrap_or(0.0))
+                        display_str += &format!(" GPU Time: {:.2}", gpu.as_f64().unwrap_or(-1.0))
                     }
 
                     if let Some(fps) = data.get("fps") {
-                        display_str += &format!(" FPS: {:.2}", fps.as_f64().unwrap_or(0.0));
+                        display_str += &format!(" FPS: {:.2}", fps.as_f64().unwrap_or(-1.0));
+                    }
+
+                    if let Some(anomalies) = data.get("anomalies") {
+                        display_str += &format!(
+                            " Entities with NaN accelerations: {:.2}",
+                            anomalies.as_i64().unwrap_or(-1)
+                        );
                     }
                 }
                 ui.label(display_str);

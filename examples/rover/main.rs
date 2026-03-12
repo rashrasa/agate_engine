@@ -60,18 +60,18 @@ fn main() {
     //     mass: 100.0,
     // });
 
-    // app.add_object(ObjectInitData {
-    //     mesh_id: mesh_completers.get(0).unwrap().clone(),
-    //     texture_id: texture_completer.clone(),
-    //     velocity: Vector3::zeros(),
-    //     acceleration: Vector3::zeros(),
-    //     bounding_box: BoundingBox::ZERO,
-    //     mass: 5.0e19,
-    //     scale: Vector3::new(5.0, 5.0, 5.0),
-    //     rotation: UnitQuaternion::identity(),
-    //     translation: Vector3::zeros(),
-    //     response: CollisionResponse::Inelastic(0.9),
-    // });
+    app.add_object(ObjectInitData {
+        mesh_id: mesh_completers.get(0).unwrap().clone(),
+        texture_id: texture_completer.clone(),
+        velocity: Vector3::zeros(),
+        acceleration: Vector3::zeros(),
+        bounding_box: BoundingBox::ZERO,
+        mass: 5.0e11,
+        scale: Vector3::new(5.0, 5.0, 5.0),
+        rotation: UnitQuaternion::identity(),
+        translation: Vector3::zeros(),
+        response: CollisionResponse::Inelastic(0.9),
+    });
 
     for i in -3..4 {
         for j in -3..4 {
