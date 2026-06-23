@@ -25,6 +25,3 @@ static_assertions = "1.1.0"
 tobj = { version = "4.0.3", features = ["log"] }
 wgpu = "29.0.3"
 winit = "0.30.12"
-
-[profile.release]
-debug = true

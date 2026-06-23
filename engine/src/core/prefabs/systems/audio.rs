@@ -1,8 +1,10 @@
 use rodio::{Decoder, MixerDeviceSink, Player};
-use std::{fs::File, time::Duration};
+use std::{io::Cursor, time::Duration};
 use winit::keyboard::KeyCode;
 
 use crate::core;
+
+static AUDIO: &[u8] = include_bytes!("../../../../assets/engine.wav");
 
 pub struct AudioSystem {
     sink: Player,
@@ -22,7 +24,7 @@ impl AudioSystem {
         }
         sink.append(
             // TODO: Currently hardcoded to example audio.
-            Decoder::try_from(File::open("examples/rover/assets/engine.wav").unwrap()).unwrap(),
+            Decoder::new(Cursor::new(AUDIO)).unwrap(),
         );
 
         Self {
@@ -46,7 +48,8 @@ impl core::System for AudioSystem {
             }
             self.sink.play();
             if self.sink.get_pos() > Duration::new(5, 0) {
-                self.sink.try_seek(Duration::ZERO).unwrap();
+                // TODO: Fix
+                // self.sink.try_seek(Duration::ZERO).unwrap();
             }
         } else {
             self.sink.set_speed(1.0);

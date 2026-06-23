@@ -33,7 +33,7 @@ fn main() {
     });
 
     let penguin_model_id = app
-        .add_obj_model("examples/rover/assets/PenguinBaseMesh.obj")
+        .add_obj_model("rover/assets/PenguinBaseMesh.obj")
         .unwrap();
     let penguin_texture_id = app.add_texture(TextureInitData {
         image: image::load_from_memory(include_bytes!("../assets/Penguin Diffuse Color.png"))
