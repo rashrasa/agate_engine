@@ -24,6 +24,8 @@ pub enum Side2V {
     Down,
 }
 
+pub type ImageData = (MipLevel, ImageBuffer<image::Rgba<u8>, Vec<u8>>);
+
 /// Crop Side2 -> side which'll get trimmed out.
 ///
 /// ShrinkToFit/Crop will fill in pixels with alpha = 0.0
@@ -37,18 +39,20 @@ type TextureEntry = (Texture, TextureView, Sampler, BindGroup);
 
 #[derive(Debug)]
 pub struct TextureStorage {
-    textures: HashMap<u64, TextureEntry>,
+    textures: Vec<TextureEntry>,
 }
 
 impl TextureStorage {
     pub fn new() -> Self {
-        Self {
-            textures: HashMap::new(),
-        }
+        Self { textures: vec![] }
+    }
+
+    pub fn len(&self) -> u64 {
+        self.textures.len() as u64
     }
 
     pub fn get(&self, texture_id: &u64) -> Option<&TextureEntry> {
-        self.textures.get(texture_id)
+        self.textures.get(*texture_id as usize)
     }
 
     // TODO: This currently ignores resize_strategy and just stretches.
@@ -80,7 +84,7 @@ impl TextureStorage {
             usage: TextureUsages::COPY_DST | TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
-        let images: Vec<(MipLevel, ImageBuffer<image::Rgba<u8>, Vec<u8>>)> = MIPMAP_LEVELS
+        let images: Vec<ImageData> = MIPMAP_LEVELS
             .map(|level| match level {
                 MipLevel::Square(size) => {
                     let start_width = full_size_image.width();
@@ -94,9 +98,8 @@ impl TextureStorage {
             })
             .to_vec();
 
-        for i in 0..images.len() {
+        for (i, (level_desc, image)) in images.iter().enumerate() {
             let level = i as u32;
-            let (level_desc, image) = &images[i];
             queue.write_texture(
                 TexelCopyTextureInfoBase {
                     texture: &texture,
@@ -148,7 +151,7 @@ impl TextureStorage {
             ],
         });
         self.textures
-            .insert(texture_id, (texture, view, sampler, bind_group));
+            .insert(texture_id as usize, (texture, view, sampler, bind_group));
         texture_id
     }
 }

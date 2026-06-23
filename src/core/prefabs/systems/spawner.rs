@@ -3,7 +3,7 @@ use std::{f32::consts::PI, time::Instant};
 use nalgebra::{UnitQuaternion, Vector3};
 
 use crate::{
-    core::{Completer, System, entity::BoundingBox},
+    core::{System, entity::BoundingBox},
     render::app::ObjectInitData,
 };
 
@@ -27,8 +27,8 @@ impl System for EntitySpawnerSystem {
     fn before_tick(&mut self, args: &mut crate::core::BeforeTickArgs) {
         if self.last.elapsed().as_secs_f32() > 0.01 {
             args.state.add_object(ObjectInitData {
-                mesh_id: Completer::from_value(self.mesh_id),
-                texture_id: Completer::from_value(self.texture_id),
+                mesh_id: self.mesh_id,
+                texture_id: self.texture_id,
                 velocity: Vector3::new(
                     rand::random::<f32>() / f32::MAX * 15.0,
                     rand::random::<f32>() / f32::MAX * 15.0,

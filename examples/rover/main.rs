@@ -1,12 +1,8 @@
 use std::f32::consts::PI;
 
-const MESH_CUBE2: u64 = 0;
-const MESH_ROUNDISH: u64 = 1;
-const MESH_SPHERE: u64 = 2;
-
 use agate_engine::{
     core::{
-        CHUNK_RESOLUTION, CHUNK_SIZE, Completer,
+        CHUNK_RESOLUTION, CHUNK_SIZE,
         entity::{BoundingBox, CollisionResponse},
         geometry::{EdgeJoin, Face, Mesh, Shape3},
     },
@@ -25,21 +21,21 @@ fn main() {
     let mut app = App::new(1920, 1080, 0);
     let meshes = get_sample_meshes();
 
-    let mut mesh_completers: Vec<Completer<u64>> = vec![];
+    let mut ids: Vec<u64> = vec![];
     for mesh in meshes.into_iter() {
-        mesh_completers.push(app.add_mesh(mesh).unwrap());
+        ids.push(app.add_mesh(mesh).unwrap());
     }
 
-    let texture_completer = app.add_texture(TextureInitData {
+    let texture_id = app.add_texture(TextureInitData {
         image: image::load_from_memory(include_bytes!("assets/white-marble-2048x2048.png"))
             .unwrap(),
         resize: ResizeStrategy::Stretch(FilterType::Gaussian),
     });
 
-    let penguin_model_completer = app
+    let penguin_model_id = app
         .add_obj_model("examples/rover/assets/PenguinBaseMesh.obj")
         .unwrap();
-    let penguin_texture_completer = app.add_texture(TextureInitData {
+    let penguin_texture_id = app.add_texture(TextureInitData {
         image: image::load_from_memory(include_bytes!("assets/Penguin Diffuse Color.png")).unwrap(),
         resize: ResizeStrategy::Stretch(FilterType::Gaussian),
     });
@@ -61,8 +57,8 @@ fn main() {
     // });
 
     app.add_object(ObjectInitData {
-        mesh_id: mesh_completers.first().unwrap().clone(),
-        texture_id: texture_completer.clone(),
+        mesh_id: *ids.first().unwrap(),
+        texture_id,
         velocity: Vector3::zeros(),
         acceleration: Vector3::zeros(),
         bounding_box: BoundingBox::ZERO,
@@ -77,8 +73,8 @@ fn main() {
         for j in -3..4 {
             for k in -3..4 {
                 app.add_object(ObjectInitData {
-                    mesh_id: penguin_model_completer.clone(),
-                    texture_id: penguin_texture_completer.clone(),
+                    mesh_id: penguin_model_id,
+                    texture_id: penguin_texture_id,
                     velocity: Vector3::new(1.0, 1.0, 1.0),
                     acceleration: Vector3::zeros(),
                     bounding_box: BoundingBox::new(

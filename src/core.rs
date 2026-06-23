@@ -9,7 +9,6 @@ pub mod assets;
 pub mod camera;
 mod constants;
 pub mod continuous;
-mod data_types;
 pub mod entity;
 pub mod geometry;
 pub mod input;
@@ -25,8 +24,6 @@ pub use lifecycle::{
 };
 
 pub use constants::*;
-
-pub use data_types::{Completer, CompleterError};
 
 pub trait Instanced<I> {
     fn instance(&self) -> I;

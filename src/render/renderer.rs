@@ -1,5 +1,6 @@
 use egui::{Color32, RichText};
 use egui_wgpu::{RendererOptions, ScreenDescriptor};
+use log::info;
 use nalgebra::Vector3;
 use serde_json::Value;
 use std::{
@@ -678,30 +679,27 @@ impl Renderer {
                 multiview_mask: None,
             });
 
-            if let Some(t) = self.textures.get(&1) {
-                self.render_module_terrain.draw_all(
-                    &mut render_pass,
-                    [
-                        &state.current_camera().bind_group(),
-                        &&t.3,
-                        &self.lights.bind_group(),
-                        &&self.depth_bind_group,
-                    ]
-                    .iter(),
-                );
-            }
-            if let Some(t) = self.textures.get(&1) {
-                self.render_module_transformed.draw_all(
-                    &mut render_pass,
-                    [
-                        &state.current_camera().bind_group(),
-                        &&t.3,
-                        &self.lights.bind_group(),
-                        &&self.depth_bind_group,
-                    ]
-                    .iter(),
-                );
-            }
+            self.render_module_terrain.draw_all(
+                &mut render_pass,
+                [
+                    &state.current_camera().bind_group(),
+                    &&self.textures.get(&0).unwrap().3,
+                    &self.lights.bind_group(),
+                    &&self.depth_bind_group,
+                ]
+                .iter(),
+            );
+
+            self.render_module_transformed.draw_all(
+                &mut render_pass,
+                [
+                    &state.current_camera().bind_group(),
+                    &&self.textures.get(&0).unwrap().3,
+                    &self.lights.bind_group(),
+                    &&self.depth_bind_group,
+                ]
+                .iter(),
+            );
 
             // Draw markers above everything else
             self.render_module_markers.draw_all(

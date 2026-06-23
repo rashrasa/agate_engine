@@ -1,8 +1,8 @@
-use std::{sync::Arc, time::Instant};
+use std::{collections::VecDeque, sync::Arc, time::Instant};
 
 use bytemuck::{Pod, Zeroable};
 use image::DynamicImage;
-use log::{error, info};
+use log::{debug, error, info};
 use nalgebra::{UnitQuaternion, Vector3};
 use serde_json::{Number, Value};
 use winit::{
@@ -16,8 +16,7 @@ use winit::{
 use crate::{
     core::{
         AfterRenderArgs, AfterTickArgs, BeforeInputArgs, BeforeRenderArgs, BeforeStartArgs,
-        BeforeTickArgs, Completer, DisposeArgs, HandleInputArgs, HandleTickArgs, RENDER_DISTANCE,
-        System,
+        BeforeTickArgs, DisposeArgs, HandleInputArgs, HandleTickArgs, RENDER_DISTANCE, System,
         assets::ICON,
         camera::{NoClipCamera, Projection},
         entity::{BoundingBox, CollisionResponse, Entity, EntityType},
@@ -39,10 +38,10 @@ const APP_START_PRECOND: Option<&str> = Some("App is started and renderer is ava
 pub struct AppInitData {
     pub width: u32,
     pub height: u32,
-    pub transform_meshes: Vec<(Completer<u64>, MeshInitData<DefaultVertexType>)>,
-    pub textures: Vec<(Completer<u64>, TextureInitData)>,
-    pub players: Vec<(Completer<u64>, PlayerInitData)>,
-    pub objects: Vec<(Completer<u64>, ObjectInitData)>,
+    pub transform_meshes: VecDeque<(u64, MeshInitData<DefaultVertexType>)>,
+    pub textures: VecDeque<(u64, TextureInitData)>,
+    pub players: VecDeque<(u64, PlayerInitData)>,
+    pub objects: VecDeque<(u64, ObjectInitData)>,
 }
 
 impl AppInitData {
@@ -50,10 +49,10 @@ impl AppInitData {
         self,
     ) -> (
         (u32, u32),
-        Vec<(Completer<u64>, MeshInitData<DefaultVertexType>)>,
-        Vec<(Completer<u64>, PlayerInitData)>,
-        Vec<(Completer<u64>, TextureInitData)>,
-        Vec<(Completer<u64>, ObjectInitData)>,
+        VecDeque<(u64, MeshInitData<DefaultVertexType>)>,
+        VecDeque<(u64, PlayerInitData)>,
+        VecDeque<(u64, TextureInitData)>,
+        VecDeque<(u64, ObjectInitData)>,
     ) {
         (
             (self.width, self.height),
@@ -74,8 +73,8 @@ where
 }
 
 pub struct ObjectInitData {
-    pub mesh_id: Completer<u64>,
-    pub texture_id: Completer<u64>,
+    pub mesh_id: u64,
+    pub texture_id: u64,
     pub velocity: Vector3<f32>,
     pub acceleration: Vector3<f32>,
     pub bounding_box: BoundingBox,
@@ -87,8 +86,8 @@ pub struct ObjectInitData {
 }
 
 pub struct PlayerInitData {
-    pub mesh_id: Completer<u64>,
-    pub texture_id: Completer<u64>,
+    pub mesh_id: u64,
+    pub texture_id: u64,
     pub velocity: Vector3<f32>,
     pub acceleration: Vector3<f32>,
     pub bounding_box: BoundingBox,
@@ -117,8 +116,8 @@ impl ActiveState {
         let id = self.entities.len() as u64;
         let object = Entity::new(
             id,
-            object.mesh_id.consume().unwrap(),
-            object.texture_id.consume().unwrap(),
+            object.mesh_id,
+            object.texture_id,
             object.scale,
             object.rotation,
             object.translation,
@@ -163,7 +162,7 @@ enum AppState {
     ),
     Started {
         // Data available once the window is created.
-        renderer: Renderer,
+        renderer: Box<Renderer>,
         state: ActiveState,
     },
 }
@@ -211,10 +210,10 @@ impl App {
             state: AppState::NeedsInit(AppInitData {
                 width,
                 height,
-                transform_meshes: vec![],
-                players: vec![],
-                objects: vec![],
-                textures: vec![],
+                transform_meshes: VecDeque::new(),
+                players: VecDeque::new(),
+                objects: VecDeque::new(),
+                textures: VecDeque::new(),
             }),
             world: World::new(seed),
             input: InputController::new(),
@@ -223,9 +222,8 @@ impl App {
     }
 
     /// Returns a completer for the mesh id and texture id (in that order).
-    pub fn add_obj_model(&mut self, path: &str) -> Result<Completer<u64>, MeshStorageError> {
-        let model =
-            TobjModel::load_from_obj(path).map_err(|e| MeshStorageError::TobjModelError(e))?;
+    pub fn add_obj_model(&mut self, path: &str) -> Result<u64, MeshStorageError> {
+        let model = TobjModel::load_from_obj(path).map_err(MeshStorageError::TobjModelError)?;
         let indices: Vec<GlobalIndexType> = model
             .model()
             .mesh
@@ -253,18 +251,18 @@ impl App {
             })
         }
         let mesh = MeshInitData { vertices, indices };
-        let completer = Completer::new(APP_START_PRECOND);
         match &mut self.state {
             AppState::NeedsInit(init_data) => {
-                init_data.transform_meshes.push((completer.clone(), mesh));
+                let id = init_data.transform_meshes.len() as u64;
+                init_data.transform_meshes.push_back((id, mesh));
 
-                Ok(completer)
+                Ok(id)
             }
             AppState::Started {
                 renderer, state: _, ..
             } => {
-                let mesh_id = renderer.add_mesh_instanced(mesh)?;
-                Ok(Completer::from_value(mesh_id))
+                let id = renderer.add_mesh_instanced(mesh)?;
+                Ok(id)
             }
         }
     }
@@ -276,29 +274,30 @@ impl App {
     pub fn add_mesh(
         &mut self,
         mesh: MeshInitData<DefaultVertexType>,
-    ) -> Result<Completer<u64>, MeshStorageError> {
-        let completer = Completer::new(APP_START_PRECOND);
+    ) -> Result<u64, MeshStorageError> {
         match &mut self.state {
             AppState::NeedsInit(init_data) => {
-                init_data.transform_meshes.push((completer.clone(), mesh));
+                let id = init_data.transform_meshes.len() as u64;
 
-                Ok(completer)
+                init_data.transform_meshes.push_back((id, mesh));
+
+                Ok(id)
             }
             AppState::Started {
                 renderer, state: _, ..
             } => {
-                let mesh_id = renderer.add_mesh_instanced(mesh)?;
-                Ok(Completer::from_value(mesh_id))
+                let id = renderer.add_mesh_instanced(mesh)?;
+                Ok(id)
             }
         }
     }
 
-    pub fn add_player(&mut self, player: PlayerInitData) -> Completer<u64> {
+    pub fn add_player(&mut self, player: PlayerInitData) -> u64 {
         match &mut self.state {
             AppState::NeedsInit(init_data) => {
-                let completer = Completer::new(APP_START_PRECOND);
-                init_data.players.push((completer.clone(), player));
-                completer
+                let id = init_data.players.len() as u64;
+                init_data.players.push_back((id, player));
+                id
             }
             AppState::Started {
                 renderer, state, ..
@@ -306,8 +305,8 @@ impl App {
                 let id = state.entities.len() as u64;
                 let player = Entity::new(
                     id,
-                    player.mesh_id.consume().unwrap(),
-                    player.texture_id.consume().unwrap(),
+                    player.mesh_id,
+                    player.texture_id,
                     player.scale,
                     player.rotation,
                     player.translation,
@@ -335,26 +334,24 @@ impl App {
                     player.mass,
                 );
                 state.entities.push(player);
-                Completer::from_value(id)
+                id
             }
         }
     }
 
-    pub fn add_object(&mut self, object: ObjectInitData) -> Completer<u64> {
+    pub fn add_object(&mut self, object: ObjectInitData) -> u64 {
         match &mut self.state {
             AppState::NeedsInit(init_data) => {
-                let completer = Completer::new(APP_START_PRECOND);
-                init_data.objects.push((completer.clone(), object));
-                completer
+                let id = init_data.objects.len() as u64;
+                init_data.objects.push_back((id, object));
+                id
             }
-            AppState::Started {
-                renderer, state, ..
-            } => {
+            AppState::Started { state, .. } => {
                 let id = state.entities.len() as u64;
                 let object = Entity::new(
                     id,
-                    object.mesh_id.consume().unwrap(),
-                    object.texture_id.consume().unwrap(),
+                    object.mesh_id,
+                    object.texture_id,
                     object.scale,
                     object.rotation,
                     object.translation,
@@ -367,39 +364,39 @@ impl App {
                 );
 
                 state.entities.push(object);
-                Completer::from_value(id)
+                id
             }
         }
     }
 
-    pub fn add_texture(&mut self, data: TextureInitData) -> Completer<u64> {
+    pub fn add_texture(&mut self, data: TextureInitData) -> u64 {
         match &mut self.state {
             AppState::NeedsInit(init_data) => {
-                let completer = Completer::new(APP_START_PRECOND);
-                init_data.textures.push((completer.clone(), data));
-                completer
+                let id = init_data.textures.len() as u64;
+                init_data.textures.push_back((id, data));
+                id
             }
             AppState::Started {
                 renderer, state: _, ..
-            } => Completer::from_value(renderer.new_texture(data)),
+            } => renderer.new_texture(data),
         }
     }
 }
 
 impl ApplicationHandler<Event> for App {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        debug!("called App::resumed");
         if let AppState::NeedsInit(data) = &mut self.state {
             let mut old_data = AppInitData {
                 width: 0,
                 height: 0,
-                transform_meshes: vec![],
-                players: vec![],
-                objects: vec![],
-                textures: vec![],
+                transform_meshes: VecDeque::new(),
+                players: VecDeque::new(),
+                objects: VecDeque::new(),
+                textures: VecDeque::new(),
             };
             std::mem::swap(&mut old_data, data);
-            let (size, mut meshes, mut players_init, mut textures, mut objects_init) =
-                old_data.inner();
+            let (size, meshes, players_init, textures, objects_init) = old_data.inner();
             let mut win_attr = Window::default_attributes();
             win_attr.inner_size = Some(Size::Physical(PhysicalSize::new(size.0, size.1)));
             win_attr.title = "Rover".into();
@@ -411,28 +408,27 @@ impl ApplicationHandler<Event> for App {
             let mut renderer = pollster::block_on(Renderer::new(window.clone()));
 
             info!("Adding meshes");
-            while meshes.len() > 0 {
-                let (mut completer, mesh) = meshes.remove(0);
+            for (id, mesh) in meshes.into_iter() {
                 let mesh_id = renderer.add_mesh_instanced(mesh).unwrap();
-                completer.complete(mesh_id).unwrap();
+                // TODO: This is a temporary hack
+                assert_eq!(id, mesh_id);
             }
+
             info!("Adding textures");
-            while textures.len() > 0 {
-                let (mut completer, texture_init) = textures.remove(0);
+            for (id, texture_init) in textures.into_iter() {
                 let texture_id = renderer.new_texture(texture_init);
-                completer.complete(texture_id).unwrap();
+                // TODO: This is a temporary hack
+                assert_eq!(id, texture_id);
             }
 
             info!("Adding entities");
             let mut entities = vec![];
 
-            while players_init.len() > 0 {
-                let (mut completer, entity) = players_init.remove(0);
-                let id = entities.len() as u64;
+            for (id, entity) in players_init.into_iter() {
                 let player = Entity::new(
                     id,
-                    entity.mesh_id.consume().unwrap(),
-                    entity.texture_id.consume().unwrap(),
+                    entity.mesh_id,
+                    entity.texture_id,
                     entity.scale,
                     entity.rotation,
                     entity.translation,
@@ -460,16 +456,13 @@ impl ApplicationHandler<Event> for App {
                     entity.mass,
                 );
                 entities.push(player);
-                completer.complete(id).unwrap();
             }
 
-            while objects_init.len() > 0 {
-                let (mut completer, object_init) = objects_init.remove(0);
-                let id = entities.len() as u64;
+            for (id, object_init) in objects_init.into_iter() {
                 let object = Entity::new(
                     id,
-                    object_init.mesh_id.consume().unwrap(),
-                    object_init.texture_id.consume().unwrap(),
+                    object_init.mesh_id,
+                    object_init.texture_id,
                     object_init.scale,
                     object_init.rotation,
                     object_init.translation,
@@ -482,7 +475,6 @@ impl ApplicationHandler<Event> for App {
                 );
 
                 entities.push(object);
-                completer.complete(id).unwrap();
             }
 
             let mut active_state = ActiveState {
@@ -520,7 +512,7 @@ impl ApplicationHandler<Event> for App {
             }
 
             self.state = AppState::Started {
-                renderer,
+                renderer: Box::new(renderer),
                 state: active_state,
             };
 
