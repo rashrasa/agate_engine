@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
 use nalgebra::{Matrix4, UnitQuaternion, Vector3, Vector4};
-use wgpu::{BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode};
 
 use crate::core::{Instanced, Meshed, Unique, camera::NoClipCamera};
 
@@ -63,7 +62,7 @@ impl BoundingBox {
 pub enum EntityType {
     Player {
         // TODO: camera and transform both store a position
-        camera: NoClipCamera,
+        camera: Box<NoClipCamera>,
     },
     Object,
 }

@@ -22,7 +22,7 @@ rayon = "1.11.0"
 rodio = "0.21.1"
 serde_json = "1.0.149"
 static_assertions = "1.1.0"
-tobj = {version = "4.0.3", features = ["log"]}
+tobj = { version = "4.0.3", features = ["log"] }
 wgpu = "27.0.1"
 winit = "0.30.12"
 
@@ -32,3 +32,7 @@ debug = true
 [[example]]
 name = "rover"
 path = "examples/rover/main.rs"
+
+[[bin]]
+name = "benchmark"
+path = "bin/benchmark/main.rs"

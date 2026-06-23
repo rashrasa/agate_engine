@@ -39,12 +39,10 @@ impl<T: Clone + Copy> Completer<T> {
     pub fn consume(self) -> Result<T, CompleterError<T>> {
         let inner = self.inner.lock().unwrap();
         match *inner {
-            None => {
-                return Err(CompleterError::PreconditionFailed(
-                    self.precondition.unwrap_or("Unspecified Precondition"),
-                ));
-            }
-            Some(v) => return Ok(v.clone()),
+            None => Err(CompleterError::PreconditionFailed(
+                self.precondition.unwrap_or("Unspecified Precondition"),
+            )),
+            Some(v) => Ok(v),
         }
     }
 }

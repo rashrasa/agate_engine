@@ -34,10 +34,7 @@ pub struct DynamicSystem<const N: usize, const R: usize> {
 
 impl<const N: usize, const R: usize> DynamicSystem<N, R> {
     pub fn new(dx_dt: StateDifferentialEquations<N, R>, x0: Mat<f64, N, 1>) -> Self {
-        Self {
-            dx_dt: dx_dt,
-            x: x0,
-        }
+        Self { dx_dt, x: x0 }
     }
 
     pub fn state(&self) -> &Mat<f64, N, 1> {
@@ -69,7 +66,7 @@ impl<const N: usize, const R: usize> DynamicSystem<N, R> {
                     let k2 = self.dx_dt[i](&self.x.add_scalar(k1 * dt / 2.0), &u, &(t + dt / 2.0));
                     let k3 = self.dx_dt[i](&self.x.add_scalar(k2 * dt / 2.0), &u, &(t + dt / 2.0));
                     let k4 = self.dx_dt[i](&self.x.add_scalar(k3 * dt), &u, &t);
-                    self.x[i] = self.x[i] + (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0 * dt
+                    self.x[i] += (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0 * dt
                 }
             }
         }

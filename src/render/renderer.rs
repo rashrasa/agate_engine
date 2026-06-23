@@ -199,10 +199,17 @@ impl Renderer {
                 label: Some("Depth Bind Group Layout"),
             });
 
+        let inv_u8_max = 1.0 / 255.0;
+
         let lights = LightSourceStorage::new(
             &mut device,
             [1000.0, 1000.0, 1000.0, 1.0],
-            [255.0 / 255.0, 255.0 / 255.0, 255.0 / 255.0, 1.0],
+            [
+                255.0 * inv_u8_max,
+                255.0 * inv_u8_max,
+                255.0 * inv_u8_max,
+                1.0,
+            ],
             1.0e6,
         );
 
@@ -280,7 +287,7 @@ impl Renderer {
                     vertex_shader_name: "vs_main".into(),
                     fragment_shader_name: "fs_main".into(),
                 },
-                (vec![
+                ([
                     // TODO: Add sun and moon
                     UniformSpec {
                         bind_group_layout: camera_bind_group_layout.clone(),
@@ -479,48 +486,48 @@ impl Renderer {
                         );
                     }
 
-                    if let Some(up) = data.get("v_up") {
-                        if let Some(up) = up.as_array() {
-                            debug_str += &format!(
-                                " up: ({:.2},{:.2},{:.2})",
-                                up[0].as_f64().unwrap_or(-1.0),
-                                up[1].as_f64().unwrap_or(-1.0),
-                                up[2].as_f64().unwrap_or(-1.0)
-                            );
-                        }
+                    if let Some(up) = data.get("v_up")
+                        && let Some(up) = up.as_array()
+                    {
+                        debug_str += &format!(
+                            " up: ({:.2},{:.2},{:.2})",
+                            up[0].as_f64().unwrap_or(-1.0),
+                            up[1].as_f64().unwrap_or(-1.0),
+                            up[2].as_f64().unwrap_or(-1.0)
+                        );
                     }
 
-                    if let Some(right) = data.get("v_right") {
-                        if let Some(right) = right.as_array() {
-                            debug_str += &format!(
-                                " right: ({:.2},{:.2},{:.2})",
-                                right[0].as_f64().unwrap_or(-1.0),
-                                right[1].as_f64().unwrap_or(-1.0),
-                                right[2].as_f64().unwrap_or(-1.0)
-                            );
-                        }
+                    if let Some(right) = data.get("v_right")
+                        && let Some(right) = right.as_array()
+                    {
+                        debug_str += &format!(
+                            " right: ({:.2},{:.2},{:.2})",
+                            right[0].as_f64().unwrap_or(-1.0),
+                            right[1].as_f64().unwrap_or(-1.0),
+                            right[2].as_f64().unwrap_or(-1.0)
+                        );
                     }
 
-                    if let Some(center) = data.get("v_center") {
-                        if let Some(center) = center.as_array() {
-                            debug_str += &format!(
-                                " center: ({:.2},{:.2},{:.2})",
-                                center[0].as_f64().unwrap_or(-1.0),
-                                center[1].as_f64().unwrap_or(-1.0),
-                                center[2].as_f64().unwrap_or(-1.0)
-                            );
-                        }
+                    if let Some(center) = data.get("v_center")
+                        && let Some(center) = center.as_array()
+                    {
+                        debug_str += &format!(
+                            " center: ({:.2},{:.2},{:.2})",
+                            center[0].as_f64().unwrap_or(-1.0),
+                            center[1].as_f64().unwrap_or(-1.0),
+                            center[2].as_f64().unwrap_or(-1.0)
+                        );
                     }
 
-                    if let Some(position) = data.get("v_position") {
-                        if let Some(position) = position.as_array() {
-                            debug_str += &format!(
-                                " position: ({:.2},{:.2},{:.2})",
-                                position[0].as_f64().unwrap_or(-1.0),
-                                position[1].as_f64().unwrap_or(-1.0),
-                                position[2].as_f64().unwrap_or(-1.0)
-                            );
-                        }
+                    if let Some(position) = data.get("v_position")
+                        && let Some(position) = position.as_array()
+                    {
+                        debug_str += &format!(
+                            " position: ({:.2},{:.2},{:.2})",
+                            position[0].as_f64().unwrap_or(-1.0),
+                            position[1].as_f64().unwrap_or(-1.0),
+                            position[2].as_f64().unwrap_or(-1.0)
+                        );
                     }
                 }
                 ui.label(RichText::new(metrics_str).color(Color32::from_rgb(0, 0, 0)));
@@ -669,16 +676,20 @@ impl Renderer {
                 occlusion_query_set: None,
                 timestamp_writes: None,
             });
-            self.render_module_terrain.draw_all(
-                &mut render_pass,
-                [
-                    &state.current_camera().bind_group(),
-                    &&self.textures.get(&1).unwrap().3,
-                    &self.lights.bind_group(),
-                    &&self.depth_bind_group,
-                ]
-                .iter(),
-            );
+
+            if let Some(t) = self.textures.get(&1) {
+                self.render_module_terrain.draw_all(
+                    &mut render_pass,
+                    [
+                        &state.current_camera().bind_group(),
+                        &&t.3,
+                        &self.lights.bind_group(),
+                        &&self.depth_bind_group,
+                    ]
+                    .iter(),
+                );
+            }
+
             self.render_module_transformed.draw_all(
                 &mut render_pass,
                 [

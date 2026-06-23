@@ -5,7 +5,7 @@ use std::{
 };
 
 use log::info;
-use nalgebra::{ArrayStorage, Const, Dim, ToConst, Vector3};
+use nalgebra::{ArrayStorage, Const};
 use serde_json::{Number, Value};
 
 use crate::core;
@@ -97,25 +97,25 @@ impl core::System for MetricsSystem {
                 cpu_time, gpu_time, fps, anomalies
             );
 
-            if let Some(gui_data) = &self.gui_data {
-                if let Ok(mut gui_data) = gui_data.write() {
-                    gui_data.insert(
-                        "cpu".into(),
-                        Value::Number(Number::from_f64(cpu_time).unwrap_or(Number::from(0))),
-                    );
+            if let Some(gui_data) = &self.gui_data
+                && let Ok(mut gui_data) = gui_data.write()
+            {
+                gui_data.insert(
+                    "cpu".into(),
+                    Value::Number(Number::from_f64(cpu_time).unwrap_or(Number::from(0))),
+                );
 
-                    gui_data.insert(
-                        "gpu".into(),
-                        Value::Number(Number::from_f64(gpu_time).unwrap_or(Number::from(0))),
-                    );
+                gui_data.insert(
+                    "gpu".into(),
+                    Value::Number(Number::from_f64(gpu_time).unwrap_or(Number::from(0))),
+                );
 
-                    gui_data.insert(
-                        "fps".into(),
-                        Value::Number(Number::from_f64(fps).unwrap_or(Number::from(0))),
-                    );
+                gui_data.insert(
+                    "fps".into(),
+                    Value::Number(Number::from_f64(fps).unwrap_or(Number::from(0))),
+                );
 
-                    gui_data.insert("anomalies".into(), Value::Number(Number::from(anomalies)));
-                }
+                gui_data.insert("anomalies".into(), Value::Number(Number::from(anomalies)));
             }
 
             self.window_rendering = Duration::ZERO;

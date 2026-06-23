@@ -1,7 +1,7 @@
 use crate::core;
 
-/// This is a "soft" boundary since it will only flip velocities when out of bounds
-/// and no clipping to boundary is done.
+// This is a "soft" boundary since it will only flip velocities when out of bounds
+// and no clipping to boundary is done.
 
 pub struct BoundarySystem {
     x: [f32; 2],

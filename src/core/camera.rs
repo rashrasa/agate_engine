@@ -58,7 +58,7 @@ impl NoClipCamera {
         let right = center.cross(&up);
 
         let view = Matrix4::look_at_rh(&position.into(), &(center.into()), &up);
-        let view_proj: Matrix4<f32> = (projection.projection() * view).into();
+        let view_proj: Matrix4<f32> = projection.projection() * view;
 
         let buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("Camera Buffer"),
@@ -67,7 +67,7 @@ impl NoClipCamera {
         });
 
         let bind_group = device.create_bind_group(&BindGroupDescriptor {
-            layout: &bind_group_layout,
+            layout: bind_group_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
                 resource: buffer.as_entire_binding(),
@@ -173,50 +173,50 @@ impl Camera for NoClipCamera {
         let mut fly_speed: f32 = CAMERA_SPEED;
         let mut roll_ccw: f32 = 0.0;
 
-        if let Some(p) = keys_pressed.get(&KeyCode::KeyW) {
-            if *p {
-                camera_forward += 1.0;
-            }
+        if let Some(p) = keys_pressed.get(&KeyCode::KeyW)
+            && *p
+        {
+            camera_forward += 1.0;
         }
-        if let Some(p) = keys_pressed.get(&KeyCode::KeyS) {
-            if *p {
-                camera_forward -= 1.0;
-            }
+        if let Some(p) = keys_pressed.get(&KeyCode::KeyS)
+            && *p
+        {
+            camera_forward -= 1.0;
         }
-        if let Some(p) = keys_pressed.get(&KeyCode::KeyA) {
-            if *p {
-                camera_right -= 1.0;
-            }
+        if let Some(p) = keys_pressed.get(&KeyCode::KeyA)
+            && *p
+        {
+            camera_right -= 1.0;
         }
-        if let Some(p) = keys_pressed.get(&KeyCode::KeyD) {
-            if *p {
-                camera_right += 1.0;
-            }
+        if let Some(p) = keys_pressed.get(&KeyCode::KeyD)
+            && *p
+        {
+            camera_right += 1.0;
         }
-        if let Some(p) = keys_pressed.get(&KeyCode::KeyQ) {
-            if *p {
-                roll_ccw += 0.0025;
-            }
+        if let Some(p) = keys_pressed.get(&KeyCode::KeyQ)
+            && *p
+        {
+            roll_ccw += 0.0025;
         }
-        if let Some(p) = keys_pressed.get(&KeyCode::KeyE) {
-            if *p {
-                roll_ccw -= 0.0025;
-            }
+        if let Some(p) = keys_pressed.get(&KeyCode::KeyE)
+            && *p
+        {
+            roll_ccw -= 0.0025;
         }
-        if let Some(p) = keys_pressed.get(&KeyCode::Space) {
-            if *p {
-                fly += 1.0;
-            }
+        if let Some(p) = keys_pressed.get(&KeyCode::Space)
+            && *p
+        {
+            fly += 1.0;
         }
-        if let Some(p) = keys_pressed.get(&KeyCode::ShiftLeft) {
-            if *p {
-                fly -= 1.0;
-            }
+        if let Some(p) = keys_pressed.get(&KeyCode::ShiftLeft)
+            && *p
+        {
+            fly -= 1.0;
         }
-        if let Some(p) = keys_pressed.get(&KeyCode::ControlLeft) {
-            if *p {
-                fly_speed *= 20.0;
-            }
+        if let Some(p) = keys_pressed.get(&KeyCode::ControlLeft)
+            && *p
+        {
+            fly_speed *= 20.0;
         }
 
         let mag = (camera_forward * camera_forward + camera_right * camera_right).sqrt();
@@ -250,7 +250,7 @@ impl Camera for NoClipCamera {
         self.roll_ccw(roll_ccw);
         self.translate(&[0.0, fly, 0.0].into());
 
-        self.view_proj = (self.projection.projection() * self.create_view()).into();
+        self.view_proj = self.projection.projection() * self.create_view();
     }
     fn update_gpu(&mut self, queue: &mut Queue) {
         queue.write_buffer(
@@ -276,7 +276,7 @@ impl Projection {
     pub fn new(width: f32, height: f32, fovy: f32, near: f32, far: f32) -> Self {
         Self {
             aspect: width / height,
-            fovy: fovy,
+            fovy,
             near,
             far,
             transform: *nalgebra::Perspective3::new(width / height, fovy * 180.0 / PI, near, far)

@@ -61,7 +61,7 @@ fn main() {
     // });
 
     app.add_object(ObjectInitData {
-        mesh_id: mesh_completers.get(0).unwrap().clone(),
+        mesh_id: mesh_completers.first().unwrap().clone(),
         texture_id: texture_completer.clone(),
         velocity: Vector3::zeros(),
         acceleration: Vector3::zeros(),
@@ -106,8 +106,8 @@ fn get_sample_meshes() -> Vec<MeshInitData<DefaultVertexType>> {
 
     let ground = Face::from_function(
         [0.0, 1.0, 0.0].into(),
-        (-(CHUNK_SIZE as f32) / 2.0, CHUNK_SIZE as f32 / 2.0),
-        (-(CHUNK_SIZE as f32) / 2.0, CHUNK_SIZE as f32 / 2.0),
+        (-CHUNK_SIZE / 2.0, CHUNK_SIZE / 2.0),
+        (-CHUNK_SIZE / 2.0, CHUNK_SIZE / 2.0),
         (CHUNK_RESOLUTION as f32, CHUNK_RESOLUTION as f32),
         |_, _| 5.0,
     )

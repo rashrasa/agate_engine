@@ -14,12 +14,18 @@ pub struct InputController {
     esc_toggle: bool,
 }
 
-impl InputController {
-    pub fn new() -> Self {
+impl Default for InputController {
+    fn default() -> Self {
         Self {
             keys_pressed: HashMap::with_capacity(100),
             esc_toggle: false,
         }
+    }
+}
+
+impl InputController {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn is_pressed(&self, key: &KeyCode) -> &bool {
@@ -44,19 +50,17 @@ impl InputController {
             WindowEvent::CursorMoved {
                 device_id: _,
                 position,
-            } => {
-                if !self.esc_toggle {
-                    let size = window.inner_size();
-                    window
-                        .set_cursor_position(PhysicalPosition::new(size.width / 2, size.height / 2))
-                        .unwrap();
-                    camera.look_up(
-                        (size.height as f32 / 2.0 - position.y as f32) / size.height as f32 * PI,
-                    );
-                    camera.look_ccw(
-                        -(size.width as f32 / 2.0 - position.x as f32) / size.width as f32 * PI,
-                    );
-                }
+            } if !self.esc_toggle => {
+                let size = window.inner_size();
+                window
+                    .set_cursor_position(PhysicalPosition::new(size.width / 2, size.height / 2))
+                    .unwrap();
+                camera.look_up(
+                    (size.height as f32 / 2.0 - position.y as f32) / size.height as f32 * PI,
+                );
+                camera.look_ccw(
+                    -(size.width as f32 / 2.0 - position.x as f32) / size.width as f32 * PI,
+                );
             }
             _ => {}
         }

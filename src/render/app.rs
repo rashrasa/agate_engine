@@ -315,7 +315,7 @@ impl App {
                     player.acceleration,
                     player.bounding_box,
                     EntityType::Player {
-                        camera: NoClipCamera::new(
+                        camera: Box::new(NoClipCamera::new(
                             renderer.device(),
                             renderer.camera_bind_group_layout(),
                             player.translation,
@@ -329,7 +329,7 @@ impl App {
                                 0.1,
                                 10000.0,
                             ),
-                        ),
+                        )),
                     },
                     player.response,
                     player.mass,
@@ -440,7 +440,7 @@ impl ApplicationHandler<Event> for App {
                     entity.acceleration,
                     entity.bounding_box,
                     EntityType::Player {
-                        camera: NoClipCamera::new(
+                        camera: Box::new(NoClipCamera::new(
                             renderer.device(),
                             renderer.camera_bind_group_layout(),
                             entity.translation,
@@ -454,7 +454,7 @@ impl ApplicationHandler<Event> for App {
                                 0.1,
                                 10000.0,
                             ),
-                        ),
+                        )),
                     },
                     entity.response,
                     entity.mass,

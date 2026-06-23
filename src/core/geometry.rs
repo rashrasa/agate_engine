@@ -93,7 +93,10 @@ impl Face {
         let n_x = e_x.floor() as u32;
         let n_z = e_z.floor() as u32;
         if n_x == 0 || n_z == 0 {
-            return Err(format!("Cannot create mesh (not enough vertices): domains:\n\tx: {:?}\n\tz: {:?}\nresolution: {:?}\nvertex count:\n\tx: {:?}\n\tz:{:?}", domain_x, domain_z, resolution, n_x, n_z).into());
+            return Err(format!(
+                "Cannot create mesh (not enough vertices): domains:\n\tx: {:?}\n\tz: {:?}\nresolution: {:?}\nvertex count:\n\tx: {:?}\n\tz:{:?}",
+                domain_x, domain_z, resolution, n_x, n_z
+            ));
         }
         let extra_x = (e_x - n_x as f32) * resolution.0;
         let extra_z = (e_z - n_z as f32) * resolution.1;
@@ -242,8 +245,7 @@ impl Shape3 {
 
         // Move vertices and indices out of faces
         let mut start = 0;
-        for i in 0..faces.len() {
-            let face = &mut faces[i];
+        for face in faces.iter_mut() {
             face_index_start.push(start);
 
             vertices.extend(face.vertices.iter());
@@ -270,8 +272,8 @@ impl Shape3 {
                 let l_idx = face_index_start[join.lower_face_index] + join.edge_lower[i];
                 let h_idx = face_index_start[join.higher_face_index] + join.edge_higher[j];
 
-                let v_i: Vector3<f32> = (&vertices[l_idx as usize]).position.into();
-                let v_j: Vector3<f32> = (&vertices[h_idx as usize]).position.into();
+                let v_i: Vector3<f32> = vertices[l_idx as usize].position.into();
+                let v_j: Vector3<f32> = vertices[h_idx as usize].position.into();
 
                 if i + j > 0 {
                     // join
