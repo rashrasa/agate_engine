@@ -22,8 +22,7 @@ use wgpu::{
 use winit::window::Window;
 
 use crate::{
-    Float,
-    core::{camera::Camera, entity::Entity, lights::LightSourceStorage},
+    core::{camera::Camera, lights::LightSourceStorage},
     render::{
         app::{ActiveState, MeshInitData, TextureInitData},
         gui::EguiRenderer,
@@ -226,7 +225,7 @@ impl Renderer {
                     vertex_shader_name: "vs_main".into(),
                     fragment_shader_name: "fs_main".into(),
                 },
-                (vec![
+                ([
                     UniformSpec {
                         bind_group_layout: camera_bind_group_layout.clone(),
                     },
@@ -349,7 +348,7 @@ impl Renderer {
                     vertex_shader_name: "vs_main".into(),
                     fragment_shader_name: "fs_main".into(),
                 },
-                (vec![UniformSpec {
+                ([UniformSpec {
                     bind_group_layout: camera_bind_group_layout.clone(),
                 }])
                 .iter(),
