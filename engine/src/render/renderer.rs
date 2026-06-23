@@ -219,7 +219,7 @@ impl Renderer {
                     instance_layout: DefaultVertexType::instance_desc(),
                 },
                 &ShaderSpec {
-                    path: "src/render/shaders/default.wgsl".into(),
+                    shader: include_str!("shaders/default.wgsl").into(),
                     vertex_shader_name: "vs_main".into(),
                     fragment_shader_name: "fs_main".into(),
                 },
@@ -280,7 +280,7 @@ impl Renderer {
                     instance_layout: TerrainVertexType::instance_desc(),
                 },
                 &ShaderSpec {
-                    path: "src/render/shaders/terrain.wgsl".into(),
+                    shader: include_str!("shaders/terrain.wgsl").into(),
                     vertex_shader_name: "vs_main".into(),
                     fragment_shader_name: "fs_main".into(),
                 },
@@ -342,7 +342,7 @@ impl Renderer {
                     instance_layout: MarkerVertexType::instance_desc(),
                 },
                 &ShaderSpec {
-                    path: "src/render/shaders/marker.wgsl".into(),
+                    shader: include_str!("shaders/marker.wgsl").into(),
                     vertex_shader_name: "vs_main".into(),
                     fragment_shader_name: "fs_main".into(),
                 },

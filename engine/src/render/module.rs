@@ -40,7 +40,7 @@ pub struct VertexSpec {
 }
 
 pub struct ShaderSpec {
-    pub path: String,
+    pub shader: String,
     pub vertex_shader_name: String,
     pub fragment_shader_name: String,
 }
@@ -90,10 +90,7 @@ where
         uniform_specs: impl Iterator<Item = &'a UniformSpec>,
         pipeline_spec: &RenderPipelineSpec,
     ) -> Result<Self, std::io::Error> {
-        let mut shader = String::new();
-        std::fs::File::open(&shader_spec.path)?
-            .read_to_string(&mut shader)
-            .unwrap();
+        let shader = shader_spec.shader.clone();
 
         let shader = device.create_shader_module(ShaderModuleDescriptor {
             label: Some("Shader"),
