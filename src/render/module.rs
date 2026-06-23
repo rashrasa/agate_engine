@@ -15,10 +15,9 @@ use std::{collections::HashMap, io::Read, num::NonZero, ops::Deref};
 use bytemuck::{Pod, Zeroable};
 use wgpu::{
     BindGroup, BindGroupLayout, ColorTargetState, DepthStencilState, Device, FragmentState,
-    IndexFormat, MultisampleState, PipelineCache, PipelineCompilationOptions,
-    PipelineLayoutDescriptor, PrimitiveState, Queue, RenderPass, RenderPipeline,
-    RenderPipelineDescriptor, ShaderModuleDescriptor, ShaderSource, VertexBufferLayout,
-    VertexState,
+    MultisampleState, PipelineCache, PipelineCompilationOptions, PipelineLayoutDescriptor,
+    PrimitiveState, Queue, RenderPass, RenderPipeline, RenderPipelineDescriptor,
+    ShaderModuleDescriptor, ShaderSource, VertexBufferLayout, VertexState,
 };
 
 use crate::{
@@ -195,9 +194,9 @@ where
         }
 
         for (mesh_id, storage) in self.instances.iter() {
-            if storage.len() > 0 {
+            if !storage.is_empty() {
                 render_pass.set_vertex_buffer(1, storage.slice());
-                let (start, end) = self.meshes.get_mesh_index_bounds(&mesh_id).unwrap();
+                let (start, end) = self.meshes.get_mesh_index_bounds(mesh_id).unwrap();
                 render_pass.draw_indexed(start as u32..end as u32, 0, 0..storage.len() as u32);
             }
         }

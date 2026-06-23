@@ -25,7 +25,7 @@ where
     pub fn new(device: &Device) -> Self {
         let instance_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("Instance Buffer"),
-            contents: &[0 as u8; 100],
+            contents: &[0_u8; 100],
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
 
@@ -41,6 +41,10 @@ where
 
     pub fn len(&self) -> u64 {
         self.data.len() as u64
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.data.len() == 0
     }
 
     pub fn capacity(&self) -> u64 {

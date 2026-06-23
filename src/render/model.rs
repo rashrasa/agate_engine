@@ -24,12 +24,12 @@ impl TobjModel {
                 ignore_lines: true,
             },
         )
-        .map_err(|e| TobjModelError::LoadError(e))?;
+        .map_err(TobjModelError::LoadError)?;
         let material = match material {
             Ok(mat) => mat,
             Err(e) => return Err(TobjModelError::LoadError(e)),
         };
-        if model.len() == 0 {
+        if model.is_empty() {
             return Err(TobjModelError::NoModelFound);
         } else if model.len() > 1 {
             return Err(TobjModelError::MoreThanOneModel(model.len()));

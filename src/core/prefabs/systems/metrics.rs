@@ -86,15 +86,9 @@ impl core::System for MetricsSystem {
             let gpu_time = (self.window_rendering.as_secs_f64() / self.n_renders as f64) * 1000.0;
             let fps = self.n_renders as f64 / window_time;
 
-            let anomalies = args
-                .state
-                .entities()
-                .iter()
-                .filter(|e| has_nan(&e.acceleration))
-                .count();
             info!(
-                "\nCPU/IO: {:.2}ms\nRender: {:.2}ms\nFPS: {:.2}\nEntities with NaN accelerations: {}",
-                cpu_time, gpu_time, fps, anomalies
+                "\nCPU/IO: {:.2}ms\nRender: {:.2}ms\nFPS: {:.2}",
+                cpu_time, gpu_time, fps
             );
 
             if let Some(gui_data) = &self.gui_data
@@ -114,8 +108,6 @@ impl core::System for MetricsSystem {
                     "fps".into(),
                     Value::Number(Number::from_f64(fps).unwrap_or(Number::from(0))),
                 );
-
-                gui_data.insert("anomalies".into(), Value::Number(Number::from(anomalies)));
             }
 
             self.window_rendering = Duration::ZERO;
@@ -136,5 +128,5 @@ fn has_nan<const R: usize, const C: usize>(
         }
     }
 
-    return false;
+    false
 }

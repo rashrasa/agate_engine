@@ -35,13 +35,13 @@ where
     pub fn new(device: &Device) -> Self {
         let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(&[0 as u8; 100]),
+            contents: bytemuck::cast_slice(&[0_u8; 100]),
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
 
         let index_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(&[0 as u8; 100]),
+            contents: bytemuck::cast_slice(&[0_u8; 100]),
             usage: BufferUsages::INDEX,
         });
         Self {

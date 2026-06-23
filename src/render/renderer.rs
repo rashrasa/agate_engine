@@ -1,6 +1,5 @@
 use egui::{Color32, RichText};
 use egui_wgpu::{RendererOptions, ScreenDescriptor};
-use log::info;
 use nalgebra::Vector3;
 use serde_json::Value;
 use std::{
@@ -8,7 +7,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 use wgpu::{
-    AddressMode, Backends, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout,
+    AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout,
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendState,
     BufferBindingType, Color, ColorTargetState, ColorWrites, CommandEncoderDescriptor,
     CompareFunction, CurrentSurfaceTexture, DepthBiasState, DepthStencilState, Device,

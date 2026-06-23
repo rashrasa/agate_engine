@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use image::{DynamicImage, ImageBuffer, imageops::FilterType};
 use wgpu::{
     AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindingResource,
@@ -49,6 +47,10 @@ impl TextureStorage {
 
     pub fn len(&self) -> u64 {
         self.textures.len() as u64
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.textures.len() == 0
     }
 
     pub fn get(&self, texture_id: &u64) -> Option<&TextureEntry> {

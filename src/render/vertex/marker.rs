@@ -33,7 +33,6 @@ impl Instanced<MarkerInstance> for MarkerEntity {
                 .to_homogeneous()
                 + Matrix4::new_translation(&self.position);
         // Marker model points up before any transforms.
-        [0.0, 1.0, 0.0];
         MarkerInstance {
             x: transform.column(0).into(),
             y: transform.column(1).into(),
