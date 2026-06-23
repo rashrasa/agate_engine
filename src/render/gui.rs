@@ -68,13 +68,12 @@ impl EguiRenderer {
         self.state.egui_ctx().begin_pass(input);
 
         // Ui
-        egui::containers::TopBottomPanel::bottom("root")
-            .max_height(window_surface_view.texture().height() as f32 / 4.0)
+        egui::Panel::bottom("root")
+            .max_size(window_surface_view.texture().height() as f32 / 4.0)
             .frame(egui::Frame::NONE)
             .show(self.state.egui_ctx(), |ui| {
                 (self.builder)(ui, self.data.clone())
             });
-
         // Draw
         let output = self.state.egui_ctx().end_pass();
 
@@ -107,6 +106,7 @@ impl EguiRenderer {
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
+            multiview_mask: None,
         });
 
         self.renderer

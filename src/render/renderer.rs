@@ -10,14 +10,15 @@ use wgpu::{
     AddressMode, Backends, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout,
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendState,
     BufferBindingType, Color, ColorTargetState, ColorWrites, CommandEncoderDescriptor,
-    CompareFunction, DepthBiasState, DepthStencilState, Device, ExperimentalFeatures, Extent3d,
-    Face, Features, FilterMode, FrontFace, Instance, InstanceDescriptor, Limits, LoadOp,
-    MultisampleState, Operations, PolygonMode, PowerPreference, PresentMode, PrimitiveState,
-    PrimitiveTopology, Queue, RenderPassColorAttachment, RenderPassDepthStencilAttachment,
-    RenderPassDescriptor, RequestAdapterOptions, Sampler, SamplerBindingType, SamplerDescriptor,
-    ShaderStages, StencilState, StoreOp, Surface, SurfaceConfiguration, SurfaceError, Texture,
-    TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType, TextureUsages,
-    TextureView, TextureViewDescriptor, TextureViewDimension, Trace, wgt::DeviceDescriptor,
+    CompareFunction, CurrentSurfaceTexture, DepthBiasState, DepthStencilState, Device,
+    ExperimentalFeatures, Extent3d, Face, Features, FilterMode, FrontFace, Instance,
+    InstanceDescriptor, Limits, LoadOp, MipmapFilterMode, MultisampleState, Operations,
+    PolygonMode, PowerPreference, PresentMode, PrimitiveState, PrimitiveTopology, Queue,
+    RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
+    RequestAdapterOptions, Sampler, SamplerBindingType, SamplerDescriptor, ShaderStages,
+    StencilState, StoreOp, Surface, SurfaceConfiguration, Texture, TextureDescriptor,
+    TextureDimension, TextureFormat, TextureSampleType, TextureUsages, TextureView,
+    TextureViewDescriptor, TextureViewDimension, Trace, wgt::DeviceDescriptor,
 };
 use winit::window::Window;
 
@@ -67,10 +68,7 @@ impl Renderer {
     pub async fn new(window: Arc<Window>) -> Self {
         let size = window.inner_size();
 
-        let instance = Instance::new(&InstanceDescriptor {
-            backends: Backends::PRIMARY,
-            ..Default::default()
-        });
+        let instance = Instance::new(InstanceDescriptor::new_without_display_handle());
 
         let surface = instance.create_surface(window.clone()).unwrap();
 
@@ -176,7 +174,7 @@ impl Renderer {
             address_mode_w: AddressMode::ClampToEdge,
             mag_filter: FilterMode::Linear,
             min_filter: FilterMode::Linear,
-            mipmap_filter: FilterMode::Nearest,
+            mipmap_filter: MipmapFilterMode::Nearest,
             compare: Some(CompareFunction::LessEqual),
             lod_min_clamp: 0.0,
             lod_max_clamp: 0.0,
@@ -252,8 +250,8 @@ impl Renderer {
                     },
                     depth_stencil: Some(DepthStencilState {
                         format: TextureFormat::Depth32Float,
-                        depth_write_enabled: true,
-                        depth_compare: CompareFunction::Less,
+                        depth_write_enabled: Some(true),
+                        depth_compare: Some(CompareFunction::Less),
                         stencil: StencilState::default(),
                         bias: DepthBiasState::default(),
                     }),
@@ -262,7 +260,7 @@ impl Renderer {
                         mask: !0,
                         alpha_to_coverage_enabled: false,
                     },
-                    multiview: None,
+                    multiview_mask: None,
                     cache: None,
                     fragment_color_target_state: Some(ColorTargetState {
                         format: config.format,
@@ -314,8 +312,8 @@ impl Renderer {
                     },
                     depth_stencil: Some(DepthStencilState {
                         format: TextureFormat::Depth32Float,
-                        depth_write_enabled: true,
-                        depth_compare: CompareFunction::Less,
+                        depth_write_enabled: Some(true),
+                        depth_compare: Some(CompareFunction::Less),
                         stencil: StencilState::default(),
                         bias: DepthBiasState::default(),
                     }),
@@ -324,7 +322,7 @@ impl Renderer {
                         mask: !0,
                         alpha_to_coverage_enabled: false,
                     },
-                    multiview: None,
+                    multiview_mask: None,
                     cache: None,
                     fragment_color_target_state: Some(ColorTargetState {
                         format: config.format,
@@ -364,8 +362,8 @@ impl Renderer {
                     },
                     depth_stencil: Some(DepthStencilState {
                         format: TextureFormat::Depth32Float,
-                        depth_write_enabled: true,
-                        depth_compare: CompareFunction::Less,
+                        depth_write_enabled: Some(true),
+                        depth_compare: Some(CompareFunction::Less),
                         stencil: StencilState::default(),
                         bias: DepthBiasState::default(),
                     }),
@@ -374,7 +372,7 @@ impl Renderer {
                         mask: !0,
                         alpha_to_coverage_enabled: false,
                     },
-                    multiview: None,
+                    multiview_mask: None,
                     cache: None,
                     fragment_color_target_state: Some(ColorTargetState {
                         format: config.format,
@@ -568,7 +566,7 @@ impl Renderer {
         self.egui_renderer.data()
     }
 
-    pub fn resize(&mut self, width: u32, height: u32) {
+    pub fn handle_resize(&mut self, width: u32, height: u32) {
         self.config.width = width;
         self.config.height = height;
         self.surface.configure(&self.device, &self.config);
@@ -630,12 +628,15 @@ impl Renderer {
             .update_gpu(&self.device, &self.queue);
     }
 
-    pub fn render(&mut self, state: &mut ActiveState) -> Result<(), SurfaceError> {
+    pub fn render(&mut self, state: &mut ActiveState) -> Result<(), CurrentSurfaceTexture> {
         if !self.is_surface_configured {
             return Ok(());
         }
 
-        let output = self.surface.get_current_texture()?;
+        let output = match self.surface.get_current_texture() {
+            CurrentSurfaceTexture::Success(o) => o,
+            cst => return Err(cst),
+        };
 
         let view = output
             .texture
@@ -674,6 +675,7 @@ impl Renderer {
                 }),
                 occlusion_query_set: None,
                 timestamp_writes: None,
+                multiview_mask: None,
             });
 
             if let Some(t) = self.textures.get(&1) {

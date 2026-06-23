@@ -247,7 +247,7 @@ pub const MARKER_VERTICES: fn(Vector3<Float>) -> Vec<MarkerVertex> = |color| {
 };
 
 #[rustfmt::skip]
-pub const MARKER_INDICES: &'static [GlobalIndexType] = &[
+pub const MARKER_INDICES: &[GlobalIndexType] = &[
     // Base
     0, 1, 2,    2, 3, 0,
 

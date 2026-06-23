@@ -57,7 +57,7 @@ pub struct RenderPipelineSpec<'a> {
     pub primitive: PrimitiveState,
     pub depth_stencil: Option<DepthStencilState>,
     pub multisample: MultisampleState,
-    pub multiview: Option<NonZero<u32>>,
+    pub multiview_mask: Option<NonZero<u32>>,
     pub cache: Option<&'a PipelineCache>,
 }
 
@@ -105,9 +105,9 @@ where
                 .map(|n| n.to_owned() + " Render Pipeline Layout")
                 .as_deref(),
             bind_group_layouts: &uniform_specs
-                .map(|s| &s.bind_group_layout)
-                .collect::<Vec<&BindGroupLayout>>(),
-            push_constant_ranges: &[],
+                .map(|s| Some(&s.bind_group_layout))
+                .collect::<Vec<Option<&BindGroupLayout>>>(),
+            immediate_size: 0,
         });
         let render_pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
@@ -130,8 +130,8 @@ where
             primitive: pipeline_spec.primitive,
             depth_stencil: pipeline_spec.depth_stencil.clone(),
             multisample: pipeline_spec.multisample,
-            multiview: pipeline_spec.multiview,
             cache: pipeline_spec.cache,
+            multiview_mask: pipeline_spec.multiview_mask,
         });
 
         Ok(Self {

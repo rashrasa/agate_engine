@@ -27,7 +27,7 @@ use crate::{
     },
     render::{
         GlobalIndexType,
-        model::{TobjModel, TobjModelError},
+        model::TobjModel,
         renderer::Renderer,
         storage::{mesh::MeshStorageError, textures::ResizeStrategy},
         vertex::DefaultVertexType,
@@ -550,7 +550,7 @@ impl ApplicationHandler<Event> for App {
                     renderer, state: _, ..
                 } = &mut self.state
                 {
-                    renderer.resize(physical_size.width, physical_size.height);
+                    renderer.handle_resize(physical_size.width, physical_size.height);
                 }
             }
             WindowEvent::CloseRequested | WindowEvent::Destroyed => {
@@ -645,7 +645,7 @@ impl ApplicationHandler<Event> for App {
 
                     match renderer.render(state) {
                         Ok(_) => {}
-                        Err(e) => error!("{}", e),
+                        Err(e) => error!("{:?}", e),
                     }
 
                     {

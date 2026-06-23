@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use image::{DynamicImage, ImageBuffer, imageops::FilterType};
 use wgpu::{
     AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindingResource,
-    Device, Extent3d, FilterMode, Origin3d, Queue, Sampler, SamplerDescriptor,
+    Device, Extent3d, FilterMode, MipmapFilterMode, Origin3d, Queue, Sampler, SamplerDescriptor,
     TexelCopyBufferLayout, TexelCopyTextureInfoBase, Texture, TextureAspect, TextureDescriptor,
     TextureDimension, TextureFormat, TextureUsages, TextureView, TextureViewDescriptor,
 };
@@ -129,7 +129,7 @@ impl TextureStorage {
             address_mode_w: AddressMode::ClampToEdge,
             mag_filter: FilterMode::Linear,
             min_filter: FilterMode::Linear,
-            mipmap_filter: FilterMode::Linear,
+            mipmap_filter: MipmapFilterMode::Linear,
             ..Default::default()
         });
 
