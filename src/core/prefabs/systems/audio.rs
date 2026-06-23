@@ -11,7 +11,8 @@ pub struct AudioSystem {
 
 impl AudioSystem {
     pub fn new() -> Self {
-        let stream_handle = rodio::DeviceSinkBuilder::open_default_sink().unwrap();
+        let mut stream_handle = rodio::DeviceSinkBuilder::open_default_sink().unwrap();
+        stream_handle.log_on_drop(false);
         let sink = rodio::Player::connect_new(stream_handle.mixer());
         sink.pause();
         if crate::core::MUTE {
