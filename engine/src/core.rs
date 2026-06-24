@@ -36,3 +36,7 @@ pub trait Unique<U: Hash + Eq + PartialEq> {
 pub trait Meshed<U: Hash + Eq + PartialEq> {
     fn mesh_id(&self) -> &U;
 }
+
+pub trait Textured<U: Hash + Eq + PartialEq> {
+    fn texture_id(&self) -> &U;
+}

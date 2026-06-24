@@ -13,10 +13,7 @@ use crate::render::{GlobalIndexType, model::TobjModelError};
 ///
 /// Meshes can't be removed once added, for now.
 #[derive(Debug)]
-pub struct MeshStorage<V>
-where
-    V: Pod + Zeroable + Clone + Copy + std::fmt::Debug,
-{
+pub struct MeshStorage<V> {
     map: HashMap<u64, (usize, usize, usize, usize)>, // vertex inclusive start, exclusive end, index inclusive start, exclusive end
 
     vertex_storage: Vec<V>,

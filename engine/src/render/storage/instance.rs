@@ -9,10 +9,7 @@ use wgpu::{
 ///
 /// Indirection is needed since instances are expected to have a specific ordering.
 #[derive(Debug)]
-pub struct InstanceStorage<I>
-where
-    I: Pod + Zeroable + Clone + Copy + std::fmt::Debug,
-{
+pub struct InstanceStorage<I> {
     data: Vec<I>,
 
     instance_buffer: Buffer,

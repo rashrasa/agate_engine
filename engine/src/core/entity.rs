@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use nalgebra::{Matrix4, UnitQuaternion, Vector3, Vector4};
 
-use crate::core::{Instanced, Meshed, Unique, camera::NoClipCamera};
+use crate::core::{Instanced, Meshed, Textured, Unique, camera::NoClipCamera};
 
 /// Elastic collisions have CollisionResponse::Inelastic(1.0).
 /// Inelastic takes any value. Values exceeding 1.0 will result in
@@ -119,10 +119,6 @@ impl Entity {
             mass,
         }
     }
-
-    pub fn texture_id(&self) -> &u64 {
-        &self.texture_id
-    }
 }
 
 impl Meshed<u64> for Entity {
@@ -134,6 +130,12 @@ impl Meshed<u64> for Entity {
 impl Unique<u64> for Entity {
     fn id(&self) -> &u64 {
         &self.id
+    }
+}
+
+impl Textured<u64> for Entity {
+    fn texture_id(&self) -> &u64 {
+        &self.texture_id
     }
 }
 

@@ -27,7 +27,7 @@ use crate::{
     render::{
         app::{ActiveState, MeshInitData, TextureInitData},
         gui::EguiRenderer,
-        module::{InstancedRenderModule, RenderPipelineSpec, ShaderSpec, UniformSpec, VertexSpec},
+        module::{InstancedRenderModule, RenderPipelineSpec, ShaderSpec, VertexSpec},
         storage::{mesh, textures::TextureStorage},
         vertex::{
             DefaultInstanceType, DefaultVertexType, MarkerInstanceType, MarkerVertexType,
@@ -211,7 +211,7 @@ impl Renderer {
         );
 
         let render_module_transformed =
-            InstancedRenderModule::<DefaultVertexType, DefaultInstanceType>::new(
+            InstancedRenderModule::<DefaultVertexType, DefaultInstanceType>::new_textured(
                 &device,
                 Some("Main Render Module"),
                 &VertexSpec {
@@ -223,21 +223,12 @@ impl Renderer {
                     vertex_shader_name: "vs_main".into(),
                     fragment_shader_name: "fs_main".into(),
                 },
-                ([
-                    UniformSpec {
-                        bind_group_layout: camera_bind_group_layout.clone(),
-                    },
-                    UniformSpec {
-                        bind_group_layout: texture_bind_group_layout.clone(),
-                    },
-                    UniformSpec {
-                        bind_group_layout: lights.layout().clone(),
-                    },
-                    UniformSpec {
-                        bind_group_layout: depth_texture_bind_group_layout.clone(),
-                    },
-                ])
-                .iter(),
+                &[
+                    Some(&camera_bind_group_layout),
+                    Some(&texture_bind_group_layout),
+                    Some(&lights.layout()),
+                    Some(&depth_texture_bind_group_layout),
+                ],
                 &RenderPipelineSpec {
                     primitive: PrimitiveState {
                         topology: PrimitiveTopology::TriangleList,
@@ -272,7 +263,7 @@ impl Renderer {
             .unwrap();
 
         let render_module_terrain =
-            InstancedRenderModule::<TerrainVertexType, TerrainInstanceType>::new(
+            InstancedRenderModule::<TerrainVertexType, TerrainInstanceType>::new_textured(
                 &device,
                 Some("Terrain Render Module"),
                 &VertexSpec {
@@ -284,22 +275,12 @@ impl Renderer {
                     vertex_shader_name: "vs_main".into(),
                     fragment_shader_name: "fs_main".into(),
                 },
-                ([
-                    // TODO: Add sun and moon
-                    UniformSpec {
-                        bind_group_layout: camera_bind_group_layout.clone(),
-                    },
-                    UniformSpec {
-                        bind_group_layout: texture_bind_group_layout.clone(),
-                    },
-                    UniformSpec {
-                        bind_group_layout: lights.layout().clone(),
-                    },
-                    UniformSpec {
-                        bind_group_layout: depth_texture_bind_group_layout.clone(),
-                    },
-                ])
-                .iter(),
+                &[
+                    Some(&camera_bind_group_layout),
+                    Some(&texture_bind_group_layout),
+                    Some(lights.layout()),
+                    Some(&depth_texture_bind_group_layout),
+                ],
                 &RenderPipelineSpec {
                     primitive: PrimitiveState {
                         topology: PrimitiveTopology::TriangleList,
@@ -346,10 +327,7 @@ impl Renderer {
                     vertex_shader_name: "vs_main".into(),
                     fragment_shader_name: "fs_main".into(),
                 },
-                ([UniformSpec {
-                    bind_group_layout: camera_bind_group_layout.clone(),
-                }])
-                .iter(),
+                &[Some(&camera_bind_group_layout)],
                 &RenderPipelineSpec {
                     primitive: PrimitiveState {
                         topology: PrimitiveTopology::TriangleList,
@@ -386,36 +364,27 @@ impl Renderer {
         let right_mesh = render_module_markers
             .add_mesh(
                 &device,
-                &queue,
-                MeshInitData {
-                    vertices: MARKER_VERTICES([1.0, 0.0, 0.0].into()),
-                    indices: MARKER_INDICES.to_vec(),
-                },
+                &MARKER_VERTICES([1.0, 0.0, 0.0].into()),
+                MARKER_INDICES,
             )
             .unwrap();
         let up_mesh = render_module_markers
             .add_mesh(
                 &device,
-                &queue,
-                MeshInitData {
-                    vertices: MARKER_VERTICES([0.0, 1.0, 0.0].into()),
-                    indices: MARKER_INDICES.to_vec(),
-                },
+                &MARKER_VERTICES([0.0, 1.0, 0.0].into()),
+                MARKER_INDICES,
             )
             .unwrap();
         let forward_mesh = render_module_markers
             .add_mesh(
                 &device,
-                &queue,
-                MeshInitData {
-                    vertices: MARKER_VERTICES([0.0, 0.0, 1.0].into()),
-                    indices: MARKER_INDICES.to_vec(),
-                },
+                &MARKER_VERTICES([0.0, 0.0, 1.0].into()),
+                MARKER_INDICES,
             )
             .unwrap();
 
         render_module_markers
-            .upsert_instances(&vec![
+            .upsert_instances(&[
                 MarkerEntity {
                     position: Vector3::zeros(),
                     direction: Vector3::new(1.0, 0.0, 0.0),
@@ -609,12 +578,12 @@ impl Renderer {
         mesh: MeshInitData<DefaultVertexType>,
     ) -> Result<u64, mesh::MeshStorageError> {
         self.render_module_transformed
-            .add_mesh(&self.device, &self.queue, mesh)
+            .add_mesh(&self.device, &mesh.vertices, &mesh.indices)
     }
 
     pub fn update_instances(&mut self, active_state: &mut ActiveState) {
         self.render_module_transformed
-            .upsert_instances(active_state.entities())
+            .upsert_instances_textured(active_state.entities())
             .unwrap();
 
         // temporary fix
@@ -678,33 +647,31 @@ impl Renderer {
                 multiview_mask: None,
             });
 
-            self.render_module_terrain.draw_all(
+            self.render_module_terrain.draw_all_textured(
                 &mut render_pass,
-                [
-                    &state.current_camera().bind_group(),
-                    &&self.textures.get(&0).unwrap().3,
-                    &self.lights.bind_group(),
-                    &&self.depth_bind_group,
-                ]
-                .iter(),
+                &self.textures,
+                1,
+                &[
+                    state.current_camera().bind_group(),
+                    self.lights.bind_group(),
+                    &self.depth_bind_group,
+                ],
             );
 
-            self.render_module_transformed.draw_all(
+            self.render_module_transformed.draw_all_textured(
                 &mut render_pass,
-                [
-                    &state.current_camera().bind_group(),
-                    &&self.textures.get(&0).unwrap().3,
-                    &self.lights.bind_group(),
-                    &&self.depth_bind_group,
-                ]
-                .iter(),
+                &self.textures,
+                1,
+                &[
+                    state.current_camera().bind_group(),
+                    self.lights.bind_group(),
+                    &self.depth_bind_group,
+                ],
             );
 
             // Draw markers above everything else
-            self.render_module_markers.draw_all(
-                &mut render_pass,
-                [&state.current_camera().bind_group()].iter(),
-            );
+            self.render_module_markers
+                .draw_all(&mut render_pass, &[state.current_camera().bind_group()]);
         }
         self.egui_renderer.render(
             &self.device,

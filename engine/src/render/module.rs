@@ -10,7 +10,7 @@
 //  - Fragment shader
 //  - Render Pipeline (draw order, face culling options, render configuration)
 
-use std::{collections::HashMap, io::Read, num::NonZero, ops::Deref};
+use std::{collections::HashMap, hash::Hash, num::NonZero};
 
 use bytemuck::{Pod, Zeroable};
 use wgpu::{
@@ -21,13 +21,13 @@ use wgpu::{
 };
 
 use crate::{
-    core::{Instanced, Meshed, Unique},
+    core::{Instanced, Meshed, Textured, Unique},
     render::{
-        GLOBAL_INDEX_FORMAT,
-        app::MeshInitData,
+        GLOBAL_INDEX_FORMAT, GlobalIndexType,
         storage::{
             instance::InstanceStorage,
             mesh::{MeshStorage, MeshStorageError},
+            textures::TextureStorage,
         },
     },
 };
@@ -45,10 +45,6 @@ pub struct ShaderSpec {
     pub fragment_shader_name: String,
 }
 
-pub struct UniformSpec {
-    pub bind_group_layout: BindGroupLayout,
-}
-
 /// Render pipeline configuration options that need to be specified manually in
 /// InstancedRenderModule::new.
 pub struct RenderPipelineSpec<'a> {
@@ -60,6 +56,43 @@ pub struct RenderPipelineSpec<'a> {
     pub cache: Option<&'a PipelineCache>,
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct TexturedInstanceKey {
+    mesh_id: u64,
+    texture_id: u64,
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct InstanceKey {
+    mesh_id: u64,
+}
+
+// TODO: Find better solution. Maybe just create another module type
+enum Instances<I> {
+    Textured(HashMap<TexturedInstanceKey, InstanceStorage<I>>),
+    NotTextured(HashMap<InstanceKey, InstanceStorage<I>>),
+}
+
+impl<I> Instances<I> {
+    fn update_gpu(&mut self, device: &Device, queue: &Queue)
+    where
+        I: Pod + Zeroable + Clone + Copy + std::fmt::Debug,
+    {
+        match self {
+            Instances::Textured(instances) => {
+                for (_id, instance) in instances.iter_mut() {
+                    instance.update_gpu(queue, device);
+                }
+            }
+            Instances::NotTextured(instances) => {
+                for (_id, instance) in instances.iter_mut() {
+                    instance.update_gpu(queue, device);
+                }
+            }
+        }
+    }
+}
+
 /// Expects that the instance data comes after the vertex data in the shader.
 ///
 /// Main data type for managing instanced geometry.
@@ -67,29 +100,21 @@ pub struct RenderPipelineSpec<'a> {
 ///
 /// The reason for this separation is that some mesh/instance data may need to be handled in a special manner,
 /// in a different shader, with different uniforms.
-pub struct InstancedRenderModule<V, I>
-where
-    V: Pod + Zeroable + Clone + Copy + std::fmt::Debug,
-    I: Pod + Zeroable + Clone + Copy + std::fmt::Debug,
-{
-    render_pipeline: RenderPipeline,
+pub struct InstancedRenderModule<V, I> {
     meshes: MeshStorage<V>,
-    instances: HashMap<u64, InstanceStorage<I>>,
+    render_pipeline: RenderPipeline,
+    instances: Instances<I>,
 }
 
-impl<V, I> InstancedRenderModule<V, I>
-where
-    V: Pod + Zeroable + Clone + Copy + std::fmt::Debug,
-    I: Pod + Zeroable + Clone + Copy + std::fmt::Debug,
-{
-    pub fn new<'a>(
+impl<V, I> InstancedRenderModule<V, I> {
+    fn new_render_pipeline(
         device: &Device,
         debug_name: Option<&str>,
         vertex_spec: &VertexSpec,
         shader_spec: &ShaderSpec,
-        uniform_specs: impl Iterator<Item = &'a UniformSpec>,
+        bind_group_layouts: &[Option<&BindGroupLayout>],
         pipeline_spec: &RenderPipelineSpec,
-    ) -> Result<Self, std::io::Error> {
+    ) -> Result<RenderPipeline, std::io::Error> {
         let shader = shader_spec.shader.clone();
 
         let shader = device.create_shader_module(ShaderModuleDescriptor {
@@ -100,9 +125,7 @@ where
             label: debug_name
                 .map(|n| n.to_owned() + " Render Pipeline Layout")
                 .as_deref(),
-            bind_group_layouts: &uniform_specs
-                .map(|s| Some(&s.bind_group_layout))
-                .collect::<Vec<Option<&BindGroupLayout>>>(),
+            bind_group_layouts,
             immediate_size: 0,
         });
         let render_pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
@@ -130,38 +153,135 @@ where
             multiview_mask: pipeline_spec.multiview_mask,
         });
 
+        Ok(render_pipeline)
+    }
+}
+
+impl<V, I> InstancedRenderModule<V, I>
+where
+    V: Pod + Zeroable + Clone + Copy + std::fmt::Debug,
+    I: Pod + Zeroable + Clone + Copy + std::fmt::Debug,
+{
+    pub fn new(
+        device: &Device,
+        debug_name: Option<&str>,
+        vertex_spec: &VertexSpec,
+        shader_spec: &ShaderSpec,
+        bind_group_layouts: &[Option<&BindGroupLayout>],
+        pipeline_spec: &RenderPipelineSpec,
+    ) -> Result<Self, std::io::Error> {
+        let render_pipeline = Self::new_render_pipeline(
+            device,
+            debug_name,
+            vertex_spec,
+            shader_spec,
+            bind_group_layouts,
+            pipeline_spec,
+        )?;
+
         Ok(Self {
-            render_pipeline,
             meshes: MeshStorage::new(device),
-            instances: HashMap::new(),
+            render_pipeline,
+            instances: Instances::NotTextured(HashMap::new()),
         })
     }
 
-    /// Add mesh to this module. Mesh will only be valid in this render module.
+    pub fn new_textured(
+        device: &Device,
+        debug_name: Option<&str>,
+        vertex_spec: &VertexSpec,
+        shader_spec: &ShaderSpec,
+        bind_group_layouts: &[Option<&BindGroupLayout>],
+        pipeline_spec: &RenderPipelineSpec,
+    ) -> Result<Self, std::io::Error> {
+        let render_pipeline = Self::new_render_pipeline(
+            device,
+            debug_name,
+            vertex_spec,
+            shader_spec,
+            bind_group_layouts,
+            pipeline_spec,
+        )?;
+
+        Ok(Self {
+            meshes: MeshStorage::new(device),
+            render_pipeline,
+            instances: Instances::Textured(HashMap::new()),
+        })
+    }
+
     pub fn add_mesh(
         &mut self,
         device: &Device,
-        queue: &Queue,
-        mesh: MeshInitData<V>,
+        vertices: &[V],
+        indices: &[GlobalIndexType],
     ) -> Result<u64, MeshStorageError> {
-        let id = self.meshes.add_mesh(&mesh.vertices, &mesh.indices)?;
-        self.instances.insert(id, InstanceStorage::new(device));
+        let mesh_id = self.meshes.add_mesh(vertices, indices)?;
+        match &mut self.instances {
+            Instances::NotTextured(map) => {
+                map.insert(InstanceKey { mesh_id }, InstanceStorage::new(device));
+            }
+            Instances::Textured(map) => {
+                map.insert(
+                    TexturedInstanceKey {
+                        mesh_id,
+                        texture_id: 0,
+                    },
+                    InstanceStorage::new(device),
+                );
+            }
+        }
 
-        Ok(id)
+        Ok(mesh_id)
     }
 
-    pub fn upsert_instances(
+    pub fn upsert_instances<E>(
         &mut self,
         // TODO: Allow for adding of static instances which dont need an ID and never get referenced.
         // InstanceStorage will need to manage static and dynamic instances separately somehow.
-        entities: &Vec<impl Instanced<I> + Meshed<u64> + Unique<u64>>,
-    ) -> Result<(), String> {
+        entities: &[E],
+    ) -> Result<(), String>
+    where
+        E: Instanced<I> + Meshed<u64> + Unique<u64>,
+    {
         for entity in entities {
-            let mesh_id = entity.mesh_id();
             let entity_id = entity.id();
+            let mesh_id = entity.mesh_id();
 
-            self.instances
-                .get_mut(mesh_id)
+            let instances = match &mut self.instances {
+                Instances::NotTextured(instances) => instances,
+                _ => unreachable!(),
+            };
+            instances
+                .get_mut(&InstanceKey { mesh_id: *mesh_id })
+                .unwrap()
+                .upsert_instance(entity_id, entity.instance());
+        }
+        Ok(())
+    }
+
+    pub fn upsert_instances_textured<E>(
+        &mut self,
+        // TODO: Allow for adding of static instances which dont need an ID and never get referenced.
+        // InstanceStorage will need to manage static and dynamic instances separately somehow.
+        entities: &[E],
+    ) -> Result<(), String>
+    where
+        E: Instanced<I> + Meshed<u64> + Unique<u64> + Textured<u64>,
+    {
+        for entity in entities {
+            let entity_id = entity.id();
+            let mesh_id = entity.mesh_id();
+            let texture_id = entity.texture_id();
+            let instances = match &mut self.instances {
+                Instances::Textured(instances) => instances,
+                _ => unreachable!(),
+            };
+            instances
+                .get_mut(&TexturedInstanceKey {
+                    mesh_id: *mesh_id,
+                    texture_id: 0,
+                })
                 .unwrap()
                 .upsert_instance(entity_id, entity.instance());
         }
@@ -169,34 +289,73 @@ where
         Ok(())
     }
 
-    pub fn update_gpu(&mut self, device: &Device, queue: &Queue) {
-        self.meshes.update_gpu(queue, device);
-        for (_id, instance) in self.instances.iter_mut() {
-            instance.update_gpu(queue, device);
-        }
-    }
-
-    pub fn draw_all<'a>(
-        &self,
-        render_pass: &mut RenderPass,
-        uniforms: impl Iterator<Item = &'a (impl Deref<Target = &'a BindGroup> + 'a)>, // TODO: May be too convoluted but works for now
-    ) {
+    pub fn draw_all(&self, render_pass: &mut RenderPass, bind_groups: &[&BindGroup]) {
         render_pass.set_pipeline(&self.render_pipeline);
 
         render_pass.set_vertex_buffer(0, self.meshes.vertex_slice(..));
         render_pass.set_index_buffer(self.meshes.index_slice(..), GLOBAL_INDEX_FORMAT);
-
-        for (i, bg) in uniforms.enumerate() {
-            render_pass.set_bind_group(i as u32, Into::<&BindGroup>::into(**bg), &[]);
+        for (i, bg) in bind_groups.iter().enumerate() {
+            let idx = if i >= 1 { i + 1 } else { i };
+            render_pass.set_bind_group(idx as u32, Some(*bg), &[]);
         }
 
-        for (mesh_id, storage) in self.instances.iter() {
+        let instances = match &self.instances {
+            Instances::NotTextured(instances) => instances,
+            _ => unreachable!(),
+        };
+
+        for (key, storage) in instances.iter() {
+            let mesh_id = &key.mesh_id;
             if !storage.is_empty() {
                 render_pass.set_vertex_buffer(1, storage.slice());
                 let (start, end) = self.meshes.get_mesh_index_bounds(mesh_id).unwrap();
                 render_pass.draw_indexed(start as u32..end as u32, 0, 0..storage.len() as u32);
             }
         }
+    }
+
+    pub fn draw_all_textured(
+        &self,
+        render_pass: &mut RenderPass,
+        textures: &TextureStorage,
+        texture_bind_group_index: u32,
+        bind_groups: &[&BindGroup],
+    ) {
+        render_pass.set_pipeline(&self.render_pipeline);
+
+        render_pass.set_vertex_buffer(0, self.meshes.vertex_slice(..));
+        render_pass.set_index_buffer(self.meshes.index_slice(..), GLOBAL_INDEX_FORMAT);
+        for (i, bg) in bind_groups.iter().enumerate() {
+            let idx = if i as u32 >= texture_bind_group_index {
+                i + 1
+            } else {
+                i
+            };
+            render_pass.set_bind_group(idx as u32, Some(*bg), &[]);
+        }
+        let instances = match &self.instances {
+            Instances::Textured(instances) => instances,
+            _ => unreachable!(),
+        };
+
+        for (key, storage) in instances.iter() {
+            let texture_id = &key.texture_id;
+            let mesh_id = &key.mesh_id;
+            if !storage.is_empty() {
+                render_pass.set_vertex_buffer(1, storage.slice());
+                render_pass.set_bind_group(
+                    texture_bind_group_index,
+                    Some(&textures.get(texture_id).unwrap().3),
+                    &[],
+                );
+                let (start, end) = self.meshes.get_mesh_index_bounds(mesh_id).unwrap();
+                render_pass.draw_indexed(start as u32..end as u32, 0, 0..storage.len() as u32);
+            }
+        }
+    }
+
+    pub fn update_gpu(&mut self, device: &Device, queue: &Queue) {
+        self.instances.update_gpu(device, queue);
     }
 }
 
