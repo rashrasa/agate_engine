@@ -4,7 +4,7 @@ A game engine focused on stunning visuals, efficiency, extensibility, and ease o
 
 **V0.1.0**
 
-![](demos/gravity_camera_models.mp4)
+https://github.com/user-attachments/assets/645711d6-bb88-4bcd-bb98-247cc32211e9
 
 **Testing MVP Release (Video not working on FireFox)**
 
