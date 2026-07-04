@@ -2,6 +2,10 @@
 
 A game engine focused on stunning visuals, efficiency, extensibility, and ease of use. Mainly a learning project.
 
+**V0.1.0**
+
+![](demos/gravity_camera_models.mp4)
+
 **Testing MVP Release (Video not working on FireFox)**
 
 https://github.com/user-attachments/assets/e3c861e7-889f-4313-b2e2-1c446752a3e2
