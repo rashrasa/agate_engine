@@ -3,10 +3,7 @@
 
 use std::time::Duration;
 
-use crate::{
-    core::input::InputController,
-    render::{app::ActiveState, renderer::Renderer},
-};
+use crate::{app::ActiveState, core::input::InputController, render::renderer::Renderer};
 
 pub struct BeforeStartArgs<'a> {
     pub state: &'a mut ActiveState,

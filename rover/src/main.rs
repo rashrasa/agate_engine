@@ -1,16 +1,13 @@
 use std::f32::consts::PI;
 
 use agate_engine::{
+    app::{App, MeshInitData, ObjectInitData, TextureInitData},
     core::{
         CHUNK_RESOLUTION, CHUNK_SIZE,
         entity::{BoundingBox, CollisionResponse},
         geometry::{EdgeJoin, Face, Mesh, Shape3},
     },
-    render::{
-        app::{App, MeshInitData, ObjectInitData, TextureInitData},
-        storage::textures::ResizeStrategy,
-        vertex::DefaultVertexType,
-    },
+    render::{storage::textures::ResizeStrategy, vertex::DefaultVertexType},
 };
 use image::imageops::FilterType;
 use nalgebra::{UnitQuaternion, UnitVector3, Vector3};

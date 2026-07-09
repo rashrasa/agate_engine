@@ -3,8 +3,8 @@ use std::{f32::consts::PI, time::Instant};
 use nalgebra::{UnitQuaternion, Vector3};
 
 use crate::{
+    app::ObjectInitData,
     core::{System, entity::BoundingBox},
-    render::app::ObjectInitData,
 };
 
 pub struct EntitySpawnerSystem {

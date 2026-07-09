@@ -23,9 +23,9 @@ use wgpu::{
 use winit::window::Window;
 
 use crate::{
+    app::{ActiveState, MeshInitData, TextureInitData},
     core::{camera::Camera, lights::LightSourceStorage},
     render::{
-        app::{ActiveState, MeshInitData, TextureInitData},
         gui::EguiRenderer,
         module::{InstancedRenderModule, RenderPipelineSpec, ShaderSpec, VertexSpec},
         storage::{mesh, textures::TextureStorage},

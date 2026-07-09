@@ -1,6 +1,5 @@
 use wgpu::IndexFormat;
 
-pub mod app;
 pub mod gui;
 pub mod model;
 pub mod module;
