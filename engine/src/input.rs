@@ -7,7 +7,7 @@ use winit::{
     window::Window,
 };
 
-use crate::core::camera::Camera;
+use crate::render::camera::Camera;
 
 pub struct InputController {
     keys_pressed: HashMap<KeyCode, bool>,

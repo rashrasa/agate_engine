@@ -24,9 +24,10 @@ use winit::window::Window;
 
 use crate::{
     app::{ActiveState, MeshInitData, TextureInitData},
-    core::{camera::Camera, lights::LightSourceStorage},
     render::{
+        camera::Camera,
         gui::EguiRenderer,
+        lights::LightSourceStorage,
         module::{InstancedRenderModule, RenderPipelineSpec, ShaderSpec, VertexSpec},
         storage::{mesh, textures::TextureStorage},
         vertex::{

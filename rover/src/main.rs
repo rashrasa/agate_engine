@@ -5,9 +5,12 @@ use agate_engine::{
     core::{
         CHUNK_RESOLUTION, CHUNK_SIZE,
         entity::{BoundingBox, CollisionResponse},
-        geometry::{EdgeJoin, Face, Mesh, Shape3},
     },
-    render::{storage::textures::ResizeStrategy, vertex::DefaultVertexType},
+    render::{
+        geometry::{EdgeJoin, Face, Mesh, Shape3},
+        storage::textures::ResizeStrategy,
+        vertex::DefaultVertexType,
+    },
 };
 use image::imageops::FilterType;
 use nalgebra::{UnitQuaternion, UnitVector3, Vector3};

@@ -1,6 +1,10 @@
 use wgpu::IndexFormat;
 
+pub mod assets;
+pub mod camera;
+pub mod geometry;
 pub mod gui;
+pub mod lights;
 pub mod model;
 pub mod module;
 pub mod renderer;

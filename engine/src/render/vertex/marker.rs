@@ -4,8 +4,8 @@ use wgpu::{BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat, Ver
 
 use crate::{
     Float,
-    core::{Instanced, Meshed, Unique, geometry::rotate_to_axis},
-    render::GlobalIndexType,
+    core::{Instanced, Meshed, Unique},
+    render::{GlobalIndexType, geometry::rotate_to_axis},
 };
 
 const BASE_WIDTH: Float = 0.125;

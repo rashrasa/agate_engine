@@ -17,15 +17,15 @@ use crate::{
     core::{
         AfterRenderArgs, AfterTickArgs, BeforeInputArgs, BeforeRenderArgs, BeforeStartArgs,
         BeforeTickArgs, DisposeArgs, HandleInputArgs, HandleTickArgs, RENDER_DISTANCE, System,
-        assets::ICON,
-        camera::{NoClipCamera, Projection},
         entity::{BoundingBox, CollisionResponse, Entity, EntityType},
-        input::InputController,
         world::terrain::World,
     },
+    input::InputController,
     prefabs::DEFAULT_SYSTEMS,
     render::{
         GlobalIndexType,
+        assets::ICON,
+        camera::{NoClipCamera, Projection},
         model::TobjModel,
         renderer::Renderer,
         storage::{mesh::MeshStorageError, textures::ResizeStrategy},
