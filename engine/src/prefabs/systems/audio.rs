@@ -4,7 +4,7 @@ use winit::keyboard::KeyCode;
 
 use crate::core;
 
-static AUDIO: &[u8] = include_bytes!("../../../../assets/engine.wav");
+static AUDIO: &[u8] = include_bytes!("../../../assets/engine.wav");
 
 pub struct AudioSystem {
     sink: Player,

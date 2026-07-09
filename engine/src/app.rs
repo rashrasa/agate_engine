@@ -21,9 +21,9 @@ use crate::{
         camera::{NoClipCamera, Projection},
         entity::{BoundingBox, CollisionResponse, Entity, EntityType},
         input::InputController,
-        prefabs::DEFAULT_SYSTEMS,
         world::terrain::World,
     },
+    prefabs::DEFAULT_SYSTEMS,
     render::{
         GlobalIndexType,
         model::TobjModel,

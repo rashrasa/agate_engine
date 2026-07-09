@@ -2,15 +2,12 @@ mod systems;
 
 use std::time::Duration;
 
-pub use systems::CollisionsSystem;
-
-use crate::core::{
-    System,
-    prefabs::systems::{
-        AudioSystem, BoundarySystem, DynamicsSystem, EntitySpawnerSystem, GravitySystem,
-        MetricsSystem,
-    },
+pub use systems::{
+    AudioSystem, BoundarySystem, CollisionsSystem, DynamicsSystem, EntitySpawnerSystem,
+    GravitySystem, MetricsSystem,
 };
+
+use crate::core::System;
 
 pub const DEFAULT_SYSTEMS: fn() -> Vec<Box<dyn System>> = || {
     vec![

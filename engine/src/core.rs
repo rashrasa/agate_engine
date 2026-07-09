@@ -14,7 +14,6 @@ pub mod geometry;
 pub mod input;
 mod lifecycle;
 pub mod lights;
-pub mod prefabs;
 pub mod world;
 
 // Exports

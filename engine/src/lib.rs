@@ -9,10 +9,10 @@
        - Textures do not work, the first texture added is the one applied to all objects currently
 */
 
-pub mod core;
-pub mod render;
-
 pub mod app;
+pub mod core;
+pub mod prefabs;
+pub mod render;
 
 pub fn init_logging(level: log::LevelFilter) {
     env_logger::builder()
