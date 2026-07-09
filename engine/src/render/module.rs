@@ -359,10 +359,8 @@ where
     }
 }
 
-#[allow(unused_imports)]
+#[cfg(test)]
 mod tests {
-    use assertables::assert_abs_diff_lt_x;
-
     #[test]
     fn cast_slice_equivalence() {
         let data = [

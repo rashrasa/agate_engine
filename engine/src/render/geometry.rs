@@ -394,9 +394,8 @@ pub fn get_orthogonal(original: Vector3<f32>) -> Vector3<f32> {
     )
 }
 
-mod test {
-    #![allow(unused_imports, dead_code)]
-
+#[cfg(test)]
+mod tests {
     use cgmath::assert_relative_eq;
     use nalgebra::{ArrayStorage, Const, Matrix};
 

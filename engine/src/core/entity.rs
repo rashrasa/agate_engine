@@ -156,11 +156,11 @@ impl Instanced<[[f32; 4]; 4]> for Entity {
     }
 }
 
-#[allow(unused_imports)]
+#[cfg(test)]
 mod tests {
     use std::f32::consts::PI;
 
-    use assertables::{assert_abs_diff_eq_x, assert_abs_diff_lt_x};
+    use assertables::assert_abs_diff_lt_x;
     use nalgebra::{UnitQuaternion, UnitVector3, Vector3};
 
     use crate::core::{
