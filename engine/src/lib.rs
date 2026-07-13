@@ -29,6 +29,8 @@ pub type Vector<const N: usize> =
 
 pub type Vector3 = Vector<3>;
 
+const GLOBAL_INTEGRATOR: Integrator = Integrator::RK4;
+
 #[derive(Clone, Debug)]
 pub enum Integrator {
     Euler,
