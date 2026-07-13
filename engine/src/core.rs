@@ -8,7 +8,6 @@ use std::hash::Hash;
 pub mod components;
 pub mod entity;
 mod lifecycle;
-mod macros;
 pub mod world;
 
 // Exports
