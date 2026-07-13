@@ -40,14 +40,14 @@ pub trait Instanced<I> {
     fn instance(&self) -> I;
 }
 
-pub trait Unique<U: Hash + Eq + PartialEq> {
+pub trait Unique<U: Hash + Eq> {
     fn id(&self) -> &U;
 }
 
-pub trait Meshed<U: Hash + Eq + PartialEq> {
+pub trait Meshed<U: Hash + Eq> {
     fn mesh_id(&self) -> &U;
 }
 
-pub trait Textured<U: Hash + Eq + PartialEq> {
+pub trait Textured<U: Hash + Eq> {
     fn texture_id(&self) -> &U;
 }

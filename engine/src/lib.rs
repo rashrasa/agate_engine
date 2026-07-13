@@ -9,6 +9,8 @@
        - Textures do not work, the first texture added is the one applied to all objects currently
 */
 
+use nalgebra::{ArrayStorage, Const};
+
 pub mod app;
 pub mod core;
 pub mod input;
@@ -22,10 +24,32 @@ pub fn init_logging(level: log::LevelFilter) {
         .init();
 }
 
+pub type Vector<const N: usize> =
+    nalgebra::Matrix<Float, Const<3>, Const<1>, ArrayStorage<Float, 3, 1>>;
+
+pub type Vector3 = Vector<3>;
+
 #[derive(Clone, Debug)]
 pub enum Integrator {
     Euler,
     RK4,
+}
+
+impl Integrator {
+    pub fn integrate<const N: usize>(&self, dt: Float, y: &mut Vector<N>, dy: &Vector<N>) {
+        match self {
+            Integrator::Euler => {
+                *y += dy * dt;
+            }
+            Integrator::RK4 => {
+                let k1 = dy;
+                let k2 = dy + dt / 2.0 * k1;
+                let k3 = dy + dt / 2.0 * k2;
+                let k4 = dy + dt * k3;
+                *y += (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0 * dt
+            }
+        }
+    }
 }
 
 pub type Float = f32;
