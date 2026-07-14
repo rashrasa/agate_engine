@@ -16,7 +16,10 @@ use image::imageops::FilterType;
 use nalgebra::{UnitQuaternion, UnitVector3, Vector3};
 
 fn main() {
-    agate_engine::init_logging(log::LevelFilter::Debug);
+    env_logger::builder()
+        .filter_level(log::LevelFilter::Debug)
+        .target(env_logger::Target::Stdout)
+        .init();
 
     let mut app = App::new(1920, 1080, 0);
     let meshes = get_sample_meshes();

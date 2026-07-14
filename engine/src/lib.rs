@@ -1,34 +1,6 @@
-/*  agate_engine
-
-   Notes:
-       - Tick and Render tied to WindowEvent::RedrawRequested event from the main window
-       - Entities and World live in app::ActiveState
-       - lifecycle::System's act on state, input, camera through lifecycle hooks
-    Issues:
-       - Inter-System communication is not currently possible (merging systems is necessary)
-       - Textures do not work, the first texture added is the one applied to all objects currently
-*/
-
 use nalgebra::{ArrayStorage, Const};
 
-pub mod app;
-pub mod core;
-pub mod input;
-pub mod render;
-
-pub fn init_logging(level: log::LevelFilter) {
-    env_logger::builder()
-        .filter_level(level)
-        .target(env_logger::Target::Stdout)
-        .init();
-}
-
-pub type Vector<const N: usize> =
-    nalgebra::Matrix<Float, Const<N>, Const<1>, ArrayStorage<Float, N, 1>>;
-
-pub type Vector3 = Vector<3>;
-
-const GLOBAL_INTEGRATOR: Integrator = Integrator::RK4;
+pub const GLOBAL_INTEGRATOR: Integrator = Integrator::RK4;
 
 #[derive(Clone, Debug)]
 pub enum Integrator {
@@ -54,4 +26,9 @@ impl Integrator {
 }
 
 pub type Float = f32;
-pub type Ident = u64;
+pub type Identifier = u64;
+
+pub type Matrix<const N: usize, const M: usize> =
+    nalgebra::Matrix<Float, Const<N>, Const<M>, ArrayStorage<Float, N, M>>;
+pub type Vector<const N: usize> = Matrix<N, 1>;
+pub type Vector3 = Vector<3>;
