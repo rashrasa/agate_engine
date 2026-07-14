@@ -110,10 +110,7 @@ impl Display for Runtime {
             if let Some(p) = i.peek().cloned() {
                 if p.entity == id {
                     i.next();
-                    string += &format!(
-                        "({:.2}, {:.2}, {:.2}), ",
-                        p.inner.p.x, p.inner.p.y, p.inner.p.z
-                    );
+                    string += &format!("({:.2}, {:.2}, {:.2}), ", p.p.x, p.p.y, p.p.z);
                 } else {
                     string += "None, ";
                 };
@@ -122,10 +119,7 @@ impl Display for Runtime {
             if let Some(v) = j.peek().cloned() {
                 if v.entity == id {
                     j.next();
-                    string += &format!(
-                        "({:.2}, {:.2}, {:.2}), ",
-                        v.inner.v.x, v.inner.v.y, v.inner.v.z
-                    );
+                    string += &format!("({:.2}, {:.2}, {:.2}), ", v.v.x, v.v.y, v.v.z);
                 } else {
                     string += "None, ";
                 };
@@ -134,10 +128,7 @@ impl Display for Runtime {
             if let Some(a) = k.peek().cloned() {
                 if a.entity == id {
                     k.next();
-                    string += &format!(
-                        "({:.2}, {:.2}, {:.2}), ",
-                        a.inner.a.x, a.inner.a.y, a.inner.a.z
-                    );
+                    string += &format!("({:.2}, {:.2}, {:.2}), ", a.a.x, a.a.y, a.a.z);
                 } else {
                     string += "None";
                 };
