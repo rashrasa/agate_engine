@@ -7,6 +7,8 @@ use std::hash::Hash;
 
 pub mod components;
 mod lifecycle;
+pub mod resources;
+pub mod runtime;
 pub mod world;
 
 // Exports

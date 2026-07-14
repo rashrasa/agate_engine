@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use crate::{Float, GLOBAL_INTEGRATOR, Ident, Vector3, render::camera::NoClipCamera};
 
 pub struct Entity {
-    id: Ident,
+    pub id: Ident,
 }
 
 #[derive(Default, Debug, Clone)]
@@ -19,7 +19,7 @@ pub struct Dynamic {
 
 impl Dynamic {
     pub fn tick(&mut self, dt: Float) {
-        crate::GLOBAL_INTEGRATOR.integrate(dt, &mut self.vel, &self.accel);
+        GLOBAL_INTEGRATOR.integrate(dt, &mut self.vel, &self.accel);
     }
 }
 
@@ -77,16 +77,10 @@ pub enum CollisionResponse {
 }
 
 #[derive(Default, Debug)]
-pub struct Runtime {
-    id: IdStorage,
-    components: ComponentStorage,
-}
-
-#[derive(Default, Debug)]
-pub struct ComponentStorage {
-    positions: Vec<Component<Position>>,
-    dynamics: Vec<Component<Dynamic>>,
-    collisions: Vec<Component<CollisionBox>>,
+pub struct Components {
+    pub(crate) positions: Vec<Component<Position>>,
+    pub(crate) dynamics: Vec<Component<Dynamic>>,
+    pub(crate) collisions: Vec<Component<CollisionBox>>,
 }
 
 pub struct EntityDescription {
@@ -97,47 +91,7 @@ pub struct EntityDescription {
     pub render: Option<Render>,
 }
 
-impl Runtime {
-    pub fn add_entity(&mut self, desc: &EntityDescription) -> Entity {
-        let id = self.id.id();
-        if let Some(inner) = &desc.position {
-            self.components.positions.push(Component {
-                entity: id,
-                inner: inner.clone(),
-            });
-        }
-        if let Some(inner) = &desc.dynamic {
-            self.components.dynamics.push(Component {
-                entity: id,
-                inner: inner.clone(),
-            });
-        }
-        if let Some(inner) = &desc.collision {
-            self.components.collisions.push(Component {
-                entity: id,
-                inner: inner.clone(),
-            });
-        }
-        Entity { id }
-    }
-
-    // Manually implemented systems
-    pub fn tick(&mut self, dt: Float) {
-        for d in self.components.dynamics.iter_mut() {
-            d.tick(dt);
-        }
-
-        apply2(
-            self.components.dynamics.iter(),
-            self.components.positions.iter_mut(),
-            |v, p| {
-                GLOBAL_INTEGRATOR.integrate(dt, &mut p.p, &v.vel);
-            },
-        );
-    }
-}
-
-fn apply2<'a, T, S, Src, Dst, F>(src: Src, dst: Dst, mut f: F)
+pub(crate) fn apply2<'a, T, S, Src, Dst, F>(src: Src, dst: Dst, mut f: F)
 where
     Src: Iterator<Item = &'a Component<T>>,
     Dst: Iterator<Item = &'a mut Component<S>>,
@@ -165,11 +119,11 @@ where
 }
 
 #[derive(Default, Debug)]
-pub struct IdStorage {
+pub struct Ids {
     next: Ident,
 }
 
-impl IdStorage {
+impl Ids {
     pub fn id(&mut self) -> Ident {
         let v = self.next;
         self.next += 1;
@@ -179,8 +133,8 @@ impl IdStorage {
 
 #[derive(Debug)]
 pub struct Component<T> {
-    entity: Ident,
-    inner: T,
+    pub(crate) entity: Ident,
+    pub(crate) inner: T,
 }
 
 impl<T> Deref for Component<T> {
