@@ -25,7 +25,7 @@ pub fn init_logging(level: log::LevelFilter) {
 }
 
 pub type Vector<const N: usize> =
-    nalgebra::Matrix<Float, Const<3>, Const<1>, ArrayStorage<Float, 3, 1>>;
+    nalgebra::Matrix<Float, Const<N>, Const<1>, ArrayStorage<Float, N, 1>>;
 
 pub type Vector3 = Vector<3>;
 
@@ -55,3 +55,4 @@ impl Integrator {
 }
 
 pub type Float = f32;
+pub type Ident = u64;

@@ -6,7 +6,6 @@
 use std::hash::Hash;
 
 pub mod components;
-pub mod entity;
 mod lifecycle;
 pub mod world;
 

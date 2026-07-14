@@ -1,27 +1,79 @@
-use std::{
-    fmt::Display,
-    ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
 
-use crate::{Float, GLOBAL_INTEGRATOR, Vector3};
+use crate::{Float, GLOBAL_INTEGRATOR, Ident, Vector3, render::camera::NoClipCamera};
 
 pub struct Entity {
-    id: u64,
+    id: Ident,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Position {
     pub p: Vector3,
 }
 
-#[derive(Default, Debug)]
-pub struct Velocity {
-    pub v: Vector3,
+#[derive(Default, Debug, Clone)]
+pub struct Dynamic {
+    pub vel: Vector3,
+    pub accel: Vector3,
 }
 
-#[derive(Default, Debug)]
-pub struct Acceleration {
-    pub a: Vector3,
+impl Dynamic {
+    pub fn tick(&mut self, dt: Float) {
+        crate::GLOBAL_INTEGRATOR.integrate(dt, &mut self.vel, &self.accel);
+    }
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct CollisionBox {
+    pub start: Vector3,
+    pub size: Vector3,
+}
+impl CollisionBox {
+    pub const ZERO: Self = CollisionBox {
+        start: Vector3::new(0.0, 0.0, 0.0),
+        size: Vector3::new(0.0, 0.0, 0.0),
+    };
+    pub const fn new(start: Vector3, size: Vector3) -> Self {
+        Self { start, size }
+    }
+    pub fn intersects(&self, other: &Self) -> Option<Vector3> {
+        let f = (other.start + other.size) / 2.0 - (self.start + self.size) / 2.0;
+
+        let min_size = self.size.inf(&other.size);
+
+        if f.x.abs() > min_size.x || f.y.abs() > min_size.y || f.z.abs() > min_size.z {
+            return None;
+        }
+
+        Some(f)
+    }
+}
+
+pub struct Camera {
+    pub camera: NoClipCamera,
+}
+
+impl Camera {
+    fn update_position(&mut self, position: &Vector3) {
+        self.camera.set_position(position);
+    }
+}
+
+pub struct InputController {}
+
+pub struct Render {
+    mesh_id: Ident,
+    texture_id: Ident,
+}
+
+/// Elastic collisions have CollisionResponse::Inelastic(1.0).
+/// Inelastic takes any value. Values exceeding 1.0 will result in
+/// energy magically being added to the system. Values below 0.0 will
+/// be clamped to 0.0.
+#[derive(Debug)]
+pub enum CollisionResponse {
+    Immovable,
+    Inelastic(f32),
 }
 
 #[derive(Default, Debug)]
@@ -30,113 +82,58 @@ pub struct Runtime {
     components: ComponentStorage,
 }
 
-#[derive(Debug)]
-pub struct Component<T> {
-    entity: u64,
-    inner: T,
-}
-
-impl<T> Deref for Component<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl<T> DerefMut for Component<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.inner
-    }
-}
-
 #[derive(Default, Debug)]
 pub struct ComponentStorage {
-    p: Vec<Component<Position>>,
-    v: Vec<Component<Velocity>>,
-    a: Vec<Component<Acceleration>>,
+    positions: Vec<Component<Position>>,
+    dynamics: Vec<Component<Dynamic>>,
+    collisions: Vec<Component<CollisionBox>>,
+}
+
+pub struct EntityDescription {
+    pub position: Option<Position>,
+    pub dynamic: Option<Dynamic>,
+    pub collision: Option<CollisionBox>,
+    pub camera: Option<Camera>,
+    pub render: Option<Render>,
 }
 
 impl Runtime {
-    pub fn add_entity(
-        &mut self,
-        position: Option<Position>,
-        velocity: Option<Velocity>,
-        acceleration: Option<Acceleration>,
-    ) -> Entity {
+    pub fn add_entity(&mut self, desc: &EntityDescription) -> Entity {
         let id = self.id.id();
-        if let Some(inner) = position {
-            self.components.p.push(Component { entity: id, inner });
+        if let Some(inner) = &desc.position {
+            self.components.positions.push(Component {
+                entity: id,
+                inner: inner.clone(),
+            });
         }
-        if let Some(inner) = velocity {
-            self.components.v.push(Component { entity: id, inner });
+        if let Some(inner) = &desc.dynamic {
+            self.components.dynamics.push(Component {
+                entity: id,
+                inner: inner.clone(),
+            });
         }
-        if let Some(inner) = acceleration {
-            self.components.a.push(Component { entity: id, inner });
+        if let Some(inner) = &desc.collision {
+            self.components.collisions.push(Component {
+                entity: id,
+                inner: inner.clone(),
+            });
         }
         Entity { id }
     }
 
     // Manually implemented systems
     pub fn tick(&mut self, dt: Float) {
-        apply2(
-            self.components.a.iter(),
-            self.components.v.iter_mut(),
-            |a, v| {
-                GLOBAL_INTEGRATOR.integrate::<2>(dt, &mut v.v, &a.a);
-            },
-        );
-
-        apply2(
-            self.components.v.iter(),
-            self.components.p.iter_mut(),
-            |v, p| {
-                GLOBAL_INTEGRATOR.integrate::<2>(dt, &mut p.p, &v.v);
-            },
-        );
-    }
-}
-
-impl Display for Runtime {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut string = String::new();
-
-        let mut i = self.components.p.iter().peekable();
-        let mut j = self.components.v.iter().peekable();
-        let mut k = self.components.a.iter().peekable();
-        for id in 0..self.id.next {
-            string += &format!("({id}");
-
-            if let Some(p) = i.peek().cloned() {
-                if p.entity == id {
-                    i.next();
-                    string += &format!("({:.2}, {:.2}, {:.2}), ", p.p.x, p.p.y, p.p.z);
-                } else {
-                    string += "None, ";
-                };
-            }
-
-            if let Some(v) = j.peek().cloned() {
-                if v.entity == id {
-                    j.next();
-                    string += &format!("({:.2}, {:.2}, {:.2}), ", v.v.x, v.v.y, v.v.z);
-                } else {
-                    string += "None, ";
-                };
-            }
-
-            if let Some(a) = k.peek().cloned() {
-                if a.entity == id {
-                    k.next();
-                    string += &format!("({:.2}, {:.2}, {:.2}), ", a.a.x, a.a.y, a.a.z);
-                } else {
-                    string += "None";
-                };
-            }
-
-            string += ")\n";
+        for d in self.components.dynamics.iter_mut() {
+            d.tick(dt);
         }
-        write!(f, "{}", string)
+
+        apply2(
+            self.components.dynamics.iter(),
+            self.components.positions.iter_mut(),
+            |v, p| {
+                GLOBAL_INTEGRATOR.integrate(dt, &mut p.p, &v.vel);
+            },
+        );
     }
 }
 
@@ -169,55 +166,33 @@ where
 
 #[derive(Default, Debug)]
 pub struct IdStorage {
-    next: u64,
+    next: Ident,
 }
 
 impl IdStorage {
-    pub fn id(&mut self) -> u64 {
+    pub fn id(&mut self) -> Ident {
         let v = self.next;
         self.next += 1;
         v
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use std::{io::Write, time::Duration};
+#[derive(Debug)]
+pub struct Component<T> {
+    entity: Ident,
+    inner: T,
+}
 
-    use super::*;
+impl<T> Deref for Component<T> {
+    type Target = T;
 
-    #[test]
-    fn it_works() {
-        let mut rt = Runtime::default();
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
 
-        rt.add_entity(None, None, None);
-        rt.add_entity(
-            Some(Default::default()),
-            Some(Default::default()),
-            Some(Default::default()),
-        );
-
-        rt.add_entity(
-            Some(Default::default()),
-            Some(Velocity {
-                v: Vector3::new(0.0, 1.0, 0.0),
-            }),
-            None,
-        );
-
-        rt.add_entity(
-            Some(Default::default()),
-            Some(Default::default()),
-            Some(Acceleration {
-                a: Vector3::new(0.0, 1.0, 0.0),
-            }),
-        );
-
-        for _ in 0..100 {
-            rt.tick(0.0167);
-            println!("{}[2J{}", 27 as char, rt);
-            std::io::stdout().flush().unwrap();
-            std::thread::sleep(Duration::from_millis(16));
-        }
+impl<T> DerefMut for Component<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
     }
 }

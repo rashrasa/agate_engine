@@ -14,9 +14,11 @@ use winit::{
 };
 
 use crate::{
+    Ident,
     core::{
         AfterRenderArgs, AfterTickArgs, BeforeInputArgs, BeforeRenderArgs, BeforeStartArgs,
         BeforeTickArgs, DisposeArgs, HandleInputArgs, HandleTickArgs, RENDER_DISTANCE, System,
+        components::{EntityDescription, Runtime},
         entity::{BoundingBox, CollisionResponse, Entity, EntityType},
         world::terrain::World,
     },
@@ -70,32 +72,6 @@ where
     pub indices: Vec<GlobalIndexType>,
 }
 
-pub struct ObjectInitData {
-    pub mesh_id: u64,
-    pub texture_id: u64,
-    pub velocity: Vector3<f32>,
-    pub acceleration: Vector3<f32>,
-    pub bounding_box: BoundingBox,
-    pub scale: Vector3<f32>,
-    pub rotation: UnitQuaternion<f32>,
-    pub translation: Vector3<f32>,
-    pub response: CollisionResponse,
-    pub mass: f32,
-}
-
-pub struct PlayerInitData {
-    pub mesh_id: u64,
-    pub texture_id: u64,
-    pub velocity: Vector3<f32>,
-    pub acceleration: Vector3<f32>,
-    pub bounding_box: BoundingBox,
-    pub scale: Vector3<f32>,
-    pub rotation: UnitQuaternion<f32>,
-    pub translation: Vector3<f32>,
-    pub response: CollisionResponse,
-    pub mass: f32,
-}
-
 pub struct TextureInitData {
     pub image: DynamicImage,
     pub resize: ResizeStrategy,
@@ -103,32 +79,15 @@ pub struct TextureInitData {
 
 // Data only available once the window and renderer are created.
 pub struct ActiveState {
-    current_camera: NoClipCamera,
-    entities: Vec<Entity>,
+    current_camera: Ident,
+    runtime: Runtime,
 
     last_update: Instant,
 }
 
 impl ActiveState {
-    pub fn add_object(&mut self, object: ObjectInitData) -> u64 {
-        let id = self.entities.len() as u64;
-        let object = Entity::new(
-            id,
-            object.mesh_id,
-            object.texture_id,
-            object.scale,
-            object.rotation,
-            object.translation,
-            object.velocity,
-            object.acceleration,
-            object.bounding_box,
-            EntityType::Object,
-            object.response,
-            object.mass,
-        );
-
-        self.entities.push(object);
-        id
+    pub fn add_entity(&mut self, desc: &EntityDescription) -> Entity {
+        self.runtime.add_entity(desc)
     }
 
     pub fn update(&mut self, _elapsed: f32, world: &mut World) {
@@ -137,7 +96,7 @@ impl ActiveState {
     }
 
     pub fn current_camera(&self) -> &NoClipCamera {
-        &self.current_camera
+        self.runtime.get_cameras()[self.current_camera]
     }
 
     pub fn current_camera_mut(&mut self) -> &mut NoClipCamera {
