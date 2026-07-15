@@ -5,6 +5,7 @@ edition = "2024"
 resolver = "3"
 
 [dependencies]
+anyhow = "1.0.103"
 assertables = "10.1.0"
 bytemuck = { version = "1.24.0", features = ["derive"] }
 cgmath = "0.18.0"

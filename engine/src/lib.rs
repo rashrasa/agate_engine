@@ -1,3 +1,8 @@
+pub mod core;
+pub mod render;
+
+pub use render::vec_buf::VecBuf;
+
 use nalgebra::{ArrayStorage, Const};
 
 pub const GLOBAL_INTEGRATOR: Integrator = Integrator::RK4;
