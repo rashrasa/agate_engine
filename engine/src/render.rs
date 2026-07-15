@@ -1,6 +1,5 @@
 pub mod vec_buf;
 
-use pollster::FutureExt;
 use wgpu::{
     Adapter, Device, DeviceDescriptor, ExperimentalFeatures, Features, Instance,
     InstanceDescriptor, Limits, MemoryHints, PowerPreference, Queue, RequestAdapterOptions, Trace,
@@ -16,7 +15,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new() -> anyhow::Result<Self> {
+    pub async fn new() -> anyhow::Result<Self> {
         let instance = Instance::new(InstanceDescriptor::new_without_display_handle());
         let adapter = instance
             .request_adapter(&RequestAdapterOptions {
@@ -24,7 +23,7 @@ impl Renderer {
                 force_fallback_adapter: false,
                 compatible_surface: None,
             })
-            .block_on()?;
+            .await?;
 
         let (device, queue) = adapter
             .request_device(&DeviceDescriptor {
@@ -35,7 +34,7 @@ impl Renderer {
                 memory_hints: MemoryHints::Performance,
                 trace: Trace::Off,
             })
-            .block_on()?;
+            .await?;
 
         Ok(Self {
             instance,
