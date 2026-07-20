@@ -1,4 +1,7 @@
-# (WIP) Agate Engine
+# (RESTARTED) Agate Engine
+
+> [!NOTE]
+> Checkout version tagged `v0.1.0` for a working example. Recent commits are part of an in-progress rewrite. Admittedly, the rewrite would've had a better place in a pull request.
 
 A game engine focused on stunning visuals, efficiency, extensibility, and ease of use. Mainly a learning project.
 
