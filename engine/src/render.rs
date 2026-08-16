@@ -5,8 +5,9 @@ use std::sync::Arc;
 use bytemuck::{Pod, Zeroable};
 use wgpu::{
     Adapter, BufferUsages, Device, DeviceDescriptor, ExperimentalFeatures, Features, Instance,
-    InstanceDescriptor, Limits, MemoryHints, PowerPreference, Queue, RequestAdapterOptions,
-    Surface, Trace, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
+    InstanceDescriptor, Limits, MemoryHints, PowerPreference, PresentMode, Queue,
+    RequestAdapterOptions, Surface, SurfaceConfiguration, TextureUsages, Trace, VertexAttribute,
+    VertexBufferLayout, VertexFormat, VertexStepMode,
 };
 use winit::window::Window;
 
@@ -18,7 +19,7 @@ pub struct Renderer {
     queue: Queue,
     adapter: Adapter,
 
-    target: Option<Arc<RenderTarget>>,
+    target: Option<RenderTarget>,
 
     vertex: VecBuf<Vertex>,
     index: VecBuf<Index>,
@@ -77,6 +78,50 @@ impl Renderer {
         })
     }
 
+    /// Sets the render target to [`window`].
+    ///
+    /// Re-creates the render pipeline and other wgpu data.
+    pub fn set_window(&mut self, window: Arc<Window>) -> anyhow::Result<()> {
+        let surface: Surface<'static> = self.instance.create_surface(Arc::clone(&window))?;
+        let caps = surface.get_capabilities(&self.adapter);
+        let size = window.inner_size();
+
+        let config = SurfaceConfiguration {
+            usage: TextureUsages::RENDER_ATTACHMENT,
+            format: caps
+                .formats
+                .iter()
+                .find(|f| f.is_srgb())
+                .copied()
+                .unwrap_or(caps.formats[0]),
+            width: size.width,
+            height: size.height,
+            present_mode: PresentMode::Immediate,
+            alpha_mode: caps.alpha_modes[0],
+            view_formats: vec![],
+            desired_maximum_frame_latency: 2,
+        };
+
+        surface.configure(&self.device, &config);
+
+        let target = RenderTarget {
+            window,
+            surface,
+            config,
+        };
+        self.target = Some(target);
+
+        Ok(())
+    }
+
+    pub fn handle_resize(&mut self, width: u32, height: u32) {
+        if let Some(target) = &mut self.target {
+            target.config.width = width;
+            target.config.height = height;
+            target.surface.configure(&self.device, &target.config);
+        }
+    }
+
     pub fn render(&self) {}
 }
 
@@ -89,6 +134,7 @@ pub struct Vertex {
 }
 
 struct RenderTarget {
-    window: Window,
+    window: Arc<Window>,
     surface: Surface<'static>,
+    config: SurfaceConfiguration,
 }
