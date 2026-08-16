@@ -31,7 +31,7 @@ impl Integrator {
 }
 
 pub type Float = f32;
-pub type Identifier = u64;
+pub type Id = u64;
 pub type Index = u32;
 
 pub type Matrix<const N: usize, const M: usize> =

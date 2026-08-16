@@ -1,20 +1,20 @@
 use std::ops::{Deref, DerefMut};
 
-use crate::{Identifier, Vector3};
+use crate::{Id, Vector3};
 
 pub struct Position {
     pub p: Vector3,
 }
 
 pub struct Render {
-    pub mesh: Identifier,
-    pub texture: Identifier,
+    pub mesh: Id,
+    pub texture: Id,
 }
 
 pub struct Components {}
 
 pub struct Component<T> {
-    pub(crate) entity: Identifier,
+    pub(crate) entity: Id,
     pub(crate) inner: T,
 }
 
