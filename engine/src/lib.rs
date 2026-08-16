@@ -32,7 +32,7 @@ impl Integrator {
 
 pub type Float = f32;
 pub type Identifier = u64;
-pub type WgpuIndex = u32;
+pub type Index = u32;
 
 pub type Matrix<const N: usize, const M: usize> =
     nalgebra::Matrix<Float, Const<N>, Const<M>, ArrayStorage<Float, N, M>>;

@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::marker::PhantomData;
 
 use bytemuck::{Pod, Zeroable};
 use wgpu::{
@@ -14,8 +14,8 @@ pub struct VecBuf<T> {
     usage: BufferUsages,
 
     // external
-    device: Arc<Device>,
-    queue: Arc<Queue>,
+    device: Device,
+    queue: Queue,
 
     // size = len * size_of::<T>()
     _marker: PhantomData<T>,
@@ -47,12 +47,7 @@ where
     /// }
     ///
     /// ```
-    pub fn with_capacity(
-        device: &Arc<Device>,
-        queue: &Arc<Queue>,
-        cap: u64,
-        usage: BufferUsages,
-    ) -> Self {
+    pub fn with_capacity(device: &Device, queue: &Queue, cap: u64, usage: BufferUsages) -> Self {
         // debug_assert since wgpu does its own verification
         debug_assert!(cap > 0, "buffer initial capacity must be greater than 0");
 
@@ -63,8 +58,8 @@ where
 
         let len = 0;
         let buffer = Self::create_buffer(device, cap, usage);
-        let device = Arc::clone(device);
-        let queue = Arc::clone(queue);
+        let device = device.clone();
+        let queue = queue.clone();
 
         Self {
             len,
@@ -79,7 +74,7 @@ where
 
     /// Resizes the underlying buffer.
     ///
-    /// If the length is larger than the new capacity,
+    /// If the current length is larger than the new capacity,
     /// those elements will be lost.
     pub fn resize(&mut self, cap: u64) {
         let new_len = self.len.min(cap);
@@ -158,7 +153,6 @@ where
 
 #[cfg(test)]
 mod tests {
-
     use pollster::FutureExt;
     use wgpu::{
         COPY_BUFFER_ALIGNMENT, DeviceDescriptor, Features, Instance, MapMode, RequestAdapterOptions,
@@ -198,8 +192,6 @@ mod tests {
             .block_on()
             .unwrap();
 
-        let device = Arc::new(device);
-        let queue = Arc::new(queue);
         let mut vec = VecBuf::with_capacity(&device, &queue, 8, BufferUsages::empty());
 
         assert!(vec.is_empty());

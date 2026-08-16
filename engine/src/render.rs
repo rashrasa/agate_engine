@@ -10,18 +10,18 @@ use wgpu::{
 };
 use winit::window::Window;
 
-use crate::{Float, VecBuf, WgpuIndex};
+use crate::{Float, Index, VecBuf};
 
 pub struct Renderer {
     instance: Instance,
-    device: Arc<Device>,
-    queue: Arc<Queue>,
+    device: Device,
+    queue: Queue,
     adapter: Adapter,
 
-    target: Option<RenderTarget>,
+    target: Option<Arc<RenderTarget>>,
 
     vertex: VecBuf<Vertex>,
-    index: VecBuf<WgpuIndex>,
+    index: VecBuf<Index>,
 }
 
 impl Renderer {
@@ -45,8 +45,6 @@ impl Renderer {
                 trace: Trace::Off,
             })
             .await?;
-        let device = Arc::new(device);
-        let queue = Arc::new(queue);
 
         let vertex = VecBuf::with_capacity(&device, &queue, 1024, BufferUsages::VERTEX);
         let index = VecBuf::with_capacity(&device, &queue, 1024, BufferUsages::INDEX);
@@ -75,6 +73,7 @@ impl Renderer {
             vertex,
             index,
             adapter,
+            target: None,
         })
     }
 
@@ -90,6 +89,6 @@ pub struct Vertex {
 }
 
 struct RenderTarget {
-    window: Arc<Window>,
+    window: Window,
     surface: Surface<'static>,
 }
